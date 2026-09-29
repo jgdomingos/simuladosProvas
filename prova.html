@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulado & Flashcards - Desenvolvimento de Aplicações (Dart/Flutter)</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --primary: #38bdf8;
+      --primary-hover: #0284c7;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --correct: #22c55e;
+      --wrong: #ef4444;
+      --border: #334155;
+      --code-bg: #090d16;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      max-width: 800px;
+    }
+
+    header h1 {
+      color: var(--primary);
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: var(--text-muted);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .tab-btn {
+      background-color: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active, .tab-btn:hover {
+      background-color: var(--primary);
+      color: #000;
+      border-color: var(--primary);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .section-content {
+      display: none;
+    }
+
+    .section-content.active {
+      display: block;
+    }
+
+    /* Estilos do Quiz */
+    .quiz-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    }
+
+    .question-header {
+      font-weight: bold;
+      color: var(--primary);
+      margin-bottom: 12px;
+      font-size: 1.1rem;
+    }
+
+    .question-title {
+      font-size: 1.05rem;
+      margin-bottom: 16px;
+    }
+
+    pre {
+      background-color: var(--code-bg);
+      padding: 14px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'Consolas', 'Courier New', Courier, monospace;
+      font-size: 0.9rem;
+      color: #e2e8f0;
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .option-btn {
+      background-color: #0f172a;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: 8px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.95rem;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--primary);
+      background-color: #1a2436;
+    }
+
+    .option-btn.correct {
+      background-color: rgba(34, 197, 94, 0.2) !important;
+      border-color: var(--correct) !important;
+      color: #4ade80 !important;
+      font-weight: bold;
+    }
+
+    .option-btn.wrong {
+      background-color: rgba(239, 68, 68, 0.2) !important;
+      border-color: var(--wrong) !important;
+      color: #f87171 !important;
+    }
+
+    .explanation {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 8px;
+      background-color: rgba(56, 189, 248, 0.1);
+      border-left: 4px solid var(--primary);
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .explanation.visible {
+      display: block;
+    }
+
+    /* Placar Final */
+    .score-board {
+      background-color: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+    }
+
+    .score-board h2 {
+      color: var(--primary);
+    }
+
+    /* Estilos dos Flashcards */
+    .flashcard-container {
+      perspective: 1000px;
+      height: 280px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    .flashcard {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.6s;
+    }
+
+    .flashcard.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 12px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-front {
+      background-color: var(--card-bg);
+      color: var(--text);
+    }
+
+    .card-front h3 {
+      color: var(--primary);
+      font-size: 1.3rem;
+    }
+
+    .card-back {
+      background-color: #0f172a;
+      color: #e2e8f0;
+      transform: rotateY(180deg);
+      border-color: var(--primary);
+    }
+
+    .card-back p {
+      font-size: 1.1rem;
+    }
+
+    .flashcard-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-btn {
+      background-color: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .nav-btn:hover {
+      background-color: var(--primary);
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Plataforma de Estudos: Dart & Flutter</h1>
+    <p>Treino prático com leitura de código, Null Safety, Coleções e POO</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('quiz')">📝 Simulado (40 Qs)</button>
+    <button class="tab-btn" onclick="switchTab('flashcards')">🃏 Flashcards</button>
+  </div>
+
+  <div class="container">
+    
+    <!-- SESSÃO SIMULADO -->
+    <div id="quiz" class="section-content active">
+      <div class="score-board">
+        <h2>Progresso: <span id="score">0</span> / <span id="total-questions">40</span> Respondidas</h2>
+      </div>
+      <div id="quiz-list"></div>
+    </div>
+
+    <!-- SESSÃO FLASHCARDS -->
+    <div id="flashcards" class="section-content">
+      <div class="flashcard-container" onclick="flipCard()">
+        <div class="flashcard" id="active-card">
+          <div class="card-face card-front">
+            <span style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">CLIQUE PARA VIRAR</span>
+            <h3 id="card-front-text">Carregando...</h3>
+          </div>
+          <div class="card-face card-back">
+            <p id="card-back-text">Carregando...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flashcard-nav">
+        <button class="nav-btn" onclick="prevCard()">Anterior</button>
+        <span id="card-counter" style="color:var(--text-muted)">1 / 12</span>
+        <button class="nav-btn" onclick="nextCard()">Próximo</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // --- DADOS DO SIMULADO ---
+    const questions = [
+      {
+        q: "Dado o trecho de código abaixo, qual será a saída impressa no console?",
+        code: "void main() {\n  List<int> nums = [1, 2, 3, 4, 5];\n  var res = nums.where((n) => n > 2).map((n) => n * 2);\n  print(res.runtimeType);\n}",
+        options: ["List<int>", "MappedListIterable<int, int> ou Iterable<int>", "Set<int>", "int"],
+        answer: 1,
+        exp: ".where() e .map() retornam objetos do tipo Iterable (lazy evaluation), e não uma List imediata."
+      },
+      {
+        q: "Qual o resultado final da execução do código a seguir?",
+        code: "void main() {\n  List<int> lista = [10, 20, 30];\n  int resultado = lista.reduce((acc, el) => acc + el);\n  print(resultado);\n}",
+        options: ["60", "[10, 20, 30]", "0", "Erro em tempo de compilação"],
+        answer: 0,
+        exp: "10 + 20 + 30 = 60."
+      },
+      {
+        q: "Qual o valor da variável total após a execução do código?",
+        code: "void main() {\n  List<int> nums = [1, 2, 3];\n  int total = nums.fold(10, (acc, el) => acc + el);\n  print(total);\n}",
+        options: ["6", "16", "10", "15"],
+        answer: 1,
+        exp: "O acumulador inicia em 10. Soma: 10 + 1 + 2 + 3 = 16."
+      },
+      {
+        q: "O que acontece se chamarmos o método .reduce() em uma lista vazia (List<int> vazia = [];)?",
+        code: "",
+        options: ["Retorna 0.", "Retorna null.", "Lança uma exceção do tipo StateError em tempo de execução.", "O código não compila."],
+        answer: 2,
+        exp: ".reduce() necessita de ao menos 1 elemento para servir como valor inicial do acumulador."
+      },
+      {
+        q: "Considere o código abaixo. O que será impresso?",
+        code: "void main() {\n  List<String> nomes = ['Ana', 'Léo', 'Ana', 'Bia'];\n  Set<String> conjunto = nomes.toSet();\n  print(conjunto.length);\n}",
+        options: ["4", "3", "2", "Erro: Set não aceita toSet()"],
+        answer: 1,
+        exp: "O Set remove automaticamente duplicatas. 'Ana' repetido é desconsiderado."
+      },
+      {
+        q: "Analise a leitura de código e selecione a alternativa com o resultado correto:",
+        code: "void main() {\n  Map<String, int> estoque = {'Caneta': 10, 'Caderno': 5};\n  estoque.putIfAbsent('Caneta', () => 20);\n  estoque.putIfAbsent('Lápis', () => 15);\n  print(estoque['Caneta']);\n  print(estoque['Lápis']);\n}",
+        options: ["20 e 15", "10 e 15", "20 e null", "10 e null"],
+        answer: 1,
+        exp: "O putIfAbsent insere o valor apenas se a chave não existir. Como 'Caneta' já existia, manteve 10."
+      },
+      {
+        q: "O que será impresso no console ao executar o trecho abaixo?",
+        code: "void main() {\n  String? nome;\n  print(nome?.length ?? 0);\n}",
+        options: ["null", "0", "Erro de compilação", "Throws NullPointerException"],
+        answer: 1,
+        exp: "nome?.length resolve para null. O operador ?? 0 converte o resultado nulo para 0."
+      },
+      {
+        q: "Qual é a função do operador ! (Null Assertion Operator) no Dart?",
+        code: "",
+        options: ["Converte uma variável em booleano negado.", "Garante ao compilador que a expressão anulável não é null naquele momento.", "Atribui um valor padrão caso a variável seja nula.", "Torna o tipo da variável opcional."],
+        answer: 1,
+        exp: "O operador ! faz o unwrap forçado assinalando que a variável não é nula."
+      },
+      {
+        q: "O que acontece na execução deste código?",
+        code: "void main() {\n  String? texto;\n  print(texto!.length);\n}",
+        options: ["Imprime 0.", "Imprime null.", "Lança uma exceção em tempo de execução (Null check operator used on a null value).", "Erro de compilação avisando que a variável é nula."],
+        answer: 2,
+        exp: "Ao tentar acessar propriedade de uma variável null através do operador !, o Dart lança uma exceção."
+      },
+      {
+        q: "Qual a diferença principal entre fold() e reduce() ao processar coleções em Dart?",
+        code: "",
+        options: [
+          "reduce() aceita apenas Strings; fold() aceita apenas números.",
+          "fold() exige a definição de um valor inicial acumulador, enquanto reduce() utiliza o primeiro elemento como inicial.",
+          "reduce() não altera a lista original; fold() modifica a lista inplace.",
+          "Não há diferença prática."
+        ],
+        answer: 1,
+        exp: "fold(inicial, (acc, item) => ...) recebe o valor inicial explicitamente; reduce assume o primeiro elemento."
+      },
+      {
+        q: "O que será exibido no console?",
+        code: "void main() {\n  List<int> dados = [2, 4, 6, 8];\n  var r = dados.fold(1, (acc, e) => acc * e);\n  print(r);\n}",
+        options: ["0", "384", "192", "24"],
+        answer: 1,
+        exp: "Acumulador inicial 1 * 2 * 4 * 6 * 8 = 384."
+      },
+      {
+        q: "Qual é a saída impressa no seguinte trecho?",
+        code: "void main() {\n  Map<String, String?> usuario = {'nome': 'Carlos', 'apelido': null};\n  String exibi = usuario['apelido'] ?? usuario['nome'] ?? 'Anônimo';\n  print(exibi);\n}",
+        options: ["null", "Anônimo", "Carlos", "Erro de sintaxe"],
+        answer: 2,
+        exp: "usuario['apelido'] é null. O operador ?? busca o próximo válido: usuario['nome'], que é 'Carlos'."
+      },
+      {
+        q: "O que acontece ao tentar compilar o código abaixo em Dart com Sound Null Safety?",
+        code: "void main() {\n  String nome = 'Maria';\n  nome = null;\n  print(nome);\n}",
+        options: ["Imprime null.", "Ocorre um erro de compilação, pois tipos não anuláveis não podem receber null.", "Imprime uma String vazia.", "A variável é convertida para dynamic automaticamente."],
+        answer: 1,
+        exp: "Sem o caractere ? na declaração (String?), a variável não pode aceitar null."
+      },
+      {
+        q: "Dado o código abaixo, qual é o valor final impresso?",
+        code: "void main() {\n  Set<int> a = {1, 2, 3};\n  Set<int> b = {2, 3, 4};\n  Set<int> c = a.intersection(b);\n  print(c);\n}",
+        options: ["{1, 2, 3, 4}", "{1, 4}", "{2, 3}", "{}"],
+        answer: 2,
+        exp: "intersection retorna os elementos comuns aos dois conjuntos: {2, 3}."
+      },
+      {
+        q: "Qual será a saída do código a seguir?",
+        code: "void main() {\n  List<int> numeros = [10, 15, 20, 25];\n  int somaPares = numeros.where((n) => n % 2 == 0).fold(0, (acc, n) => acc + n);\n  print(somaPares);\n}",
+        options: ["30", "40", "70", "10"],
+        answer: 0,
+        exp: ".where filtra 10 e 20. O .fold soma 0 + 10 + 20 = 30."
+      },
+      {
+        q: "O que o operador ?. (Null-aware navigation) faz especificamente?",
+        code: "",
+        options: [
+          "Força a execução do método de um objeto mesmo que seja nulo.",
+          "Avalia o membro à direita somente se a expressão à esquerda não for nula; caso contrário, retorna null.",
+          "Atribui um valor apenas se o ponteiro for nulo.",
+          "Verifica se o valor é igual a verdadeiro."
+        ],
+        answer: 1,
+        exp: "Essa é a definição oficial do operador de navegação segura ?."
+      },
+      {
+        q: "Qual será a saída do código a seguir?",
+        code: "void main() {\n  Map<String, dynamic> dados = {'a': 1, 'b': 2, 'c': 3};\n  var filtrado = dados.entries.where((e) => e.value > 1).map((e) => e.key);\n  print(filtrado.toList());\n}",
+        options: ["[a]", "[b, c]", "[2, 3]", "{b: 2, c: 3}"],
+        answer: 1,
+        exp: "Filtra entradas com valor > 1 ('b': 2 e 'c': 3) e pega apenas as chaves ('b', 'c')."
+      },
+      {
+        q: "Em relação ao uso de final e const em coleções, qual instrução lança um erro em tempo de execução?",
+        code: "void main() {\n  final List<int> a = [1, 2];\n  const List<int> b = [1, 2];\n  a.add(3); // Linha 1\n  b.add(3); // Linha 2\n}",
+        options: ["Apenas a Linha 1 gera erro.", "Apenas a Linha 2 gera erro (UnsupportedError / Immutable list).", "Ambas as linhas geram erro de compilação.", "Nenhuma das linhas gera erro."],
+        answer: 1,
+        exp: "Listas const criam coleções imutáveis na memória. Tentar modificar lança exceção em runtime."
+      },
+      {
+        q: "Qual o comportamento de visibilidade de membros marcados com _ (underline) em Dart?",
+        code: "",
+        options: [
+          "O elemento torna-se protegido (acessível apenas por subclasses).",
+          "O elemento torna-se estritamente privado à própria classe.",
+          "O elemento torna-se privado ao nível do arquivo/biblioteca (library-level scope).",
+          "O elemento só pode ser lido, mas não alterado."
+        ],
+        answer: 2,
+        exp: "O escopo privado do Dart engloba todo o arquivo (library) onde o elemento foi declarado."
+      },
+      {
+        q: "O que o seguinte código imprime?",
+        code: "void main() {\n  List<String> palavras = ['Dart', 'Flutter', 'Mobile'];\n  String resultado = palavras.reduce((acc, el) => '$acc-$el');\n  print(resultado);\n}",
+        options: ["-Dart-Flutter-Mobile", "Dart-Flutter-Mobile", "DartFlutterMobile", "Erro de sintaxe"],
+        answer: 1,
+        exp: "Intercala o separador '-' entre cada elemento."
+      },
+      {
+        q: "Qual será a saída do teste de mesa abaixo?",
+        code: "void main() {\n  List<int> lista = [5, 10, 15];\n  int x = lista.fold(5, (acc, e) => acc + e);\n  print(x);\n}",
+        options: ["30", "35", "25", "5"],
+        answer: 1,
+        exp: "Acumulador inicia em 5. Soma: 5 + 5 + 10 + 15 = 35."
+      },
+      {
+        q: "O que o operador ??= faz em Dart?",
+        code: "",
+        options: [
+          "Compara se dois objetos nulos são idênticos.",
+          "Atribui um valor à variável apenas se essa variável for nula no momento.",
+          "Atribui um valor e lança exceção em caso de incompatibilidade.",
+          "Desfaz a anulação de uma variável."
+        ],
+        answer: 1,
+        exp: "x ??= 10 significa 'se x for nulo, atribua 10'."
+      },
+      {
+        q: "Analise o código e selecione a opção correta:",
+        code: "void main() {\n  List<int?> listaComNulos = [1, null, 3, null, 5];\n  var naoNulos = listaComNulos.where((e) => e != null).map((e) => e!).toList();\n  print(naoNulos);\n}",
+        options: ["[1, 3, 5]", "[1, null, 3, null, 5]", "Lança exceção ao encontrar null.", "[]"],
+        answer: 0,
+        exp: "Filtra os nulos e aplica o unwrap com !, gerando [1, 3, 5]."
+      },
+      {
+        q: "Sobre a estrutura Map em Dart, é INCORRETO afirmar:",
+        code: "",
+        options: [
+          "As chaves devem ser únicas dentro de uma mesma instância.",
+          "Tentar acessar uma chave inexistente resulta em uma exceção de parada imediata.",
+          "Um JSON decodificado é tipicamente representado como Map<String, dynamic>.",
+          "Map possui a propriedade .keys e .values para inspeção."
+        ],
+        answer: 1,
+        exp: "Acessar uma chave inexistente em um Map simplesmente retorna null, sem erro."
+      },
+      {
+        q: "O que será impresso após a execução do código a seguir?",
+        code: "void main() {\n  List<int> a = [1, 2, 3];\n  List<int> b = [0, ...a, 4];\n  print(b);\n}",
+        options: ["[0, [1, 2, 3], 4]", "[0, 1, 2, 3, 4]", "[1, 2, 3, 0, 4]", "Erro de compilação devido ao uso de ..."],
+        answer: 1,
+        exp: "O operador spread (...) desembrulha a lista 'a' dentro da lista 'b'."
+      },
+      {
+        q: "Qual é a saída do código a seguir?",
+        code: "void main() {\n  bool ativo = true;\n  List<String> itens = ['Item 1', if (ativo) 'Item 2', 'Item 3'];\n  print(itens.length);\n}",
+        options: ["2", "3", "4", "Erro de sintaxe"],
+        answer: 1,
+        exp: "Com collection if, como ativo é true, 'Item 2' entra na lista, totalizando 3 elementos."
+      },
+      {
+        q: "Qual a diferença técnica de complexidade (Big O) ao buscar a existência de um elemento (contains) em uma List vs Set?",
+        code: "",
+        options: [
+          "List é O(1) e Set é O(n).",
+          "List é O(n) no pior caso, enquanto Set é O(1) em média por conta do cálculo de hash.",
+          "Ambos executam com complexidade O(1).",
+          "Ambos executam com complexidade O(log n)."
+        ],
+        answer: 1,
+        exp: "Set utiliza tabela hash, permitindo verificação em tempo constante O(1)."
+      },
+      {
+        q: "O que o método .expand() faz em uma coleção no Dart?",
+        code: "",
+        options: [
+          "Duplica a quantidade de elementos de uma lista.",
+          "Mapeia cada elemento para um Iterable e nivela (flattens) o resultado em um único Iterable.",
+          "Aumenta dinamicamente a capacidade da memória RAM.",
+          "Ordena uma lista do menor para o maior."
+        ],
+        answer: 1,
+        exp: ".expand() achata coleções aninhadas."
+      },
+      {
+        q: "Qual a saída do código abaixo?",
+        code: "void main() {\n  List<List<int>> matriz = [[1, 2], [3, 4]];\n  var listaUnica = matriz.expand((element) => element).toList();\n  print(listaUnica);\n}",
+        options: ["[[1, 2], [3, 4]]", "[1, 2, 3, 4]", "[3, 7]", "10"],
+        answer: 1,
+        exp: "Expande as sublistas em um único nível: [1, 2, 3, 4]."
+      },
+      {
+        q: "O que acontece ao executar este código com parâmetro nomeado?",
+        code: "double calcularArea({required double largura, double altura = 1.0}) {\n  return largura * altura;\n}\n\nvoid main() {\n  print(calcularArea(largura: 5.0));\n}",
+        options: ["Lança erro por falta do parâmetro altura.", "Retorna 5.0", "Retorna 0.0", "Erro de compilação por usar chaves {}"],
+        answer: 1,
+        exp: "O parâmetro nomeado altura assume o valor padrão 1.0. 5.0 * 1.0 = 5.0."
+      },
+      {
+        q: "Qual o resultado impresso no console?",
+        code: "void main() {\n  List<int> valores = [10, 20, 30];\n  var res = valores.map((e) => e ~/ 3).toList();\n  print(res);\n}",
+        options: ["[3.33, 6.66, 10.0]", "[3, 6, 10]", "[1, 2, 3]", "Erro de compilação"],
+        answer: 1,
+        exp: "O operador ~/ faz divisão inteira descartando decimais: 10~/3=3, 20~/3=6, 30~/3=10."
+      },
+      {
+        q: "Analise o comportamento do código abaixo e identifique a saída:",
+        code: "void main() {\n  Set<int> nums = {10, 20, 30};\n  bool inseriu = nums.add(20);\n  print('$inseriu |${nums.length}');\n}",
+        options: ["true | 4", "false | 3", "true | 3", "false | 4"],
+        answer: 1,
+        exp: "Set não aceita duplicatas. A adição do 20 falha (retorna false) e o tamanho permanece 3."
+      },
+      {
+        q: "O que acontece no código abaixo durante a compilação/execução?",
+        code: "class Produto {\n  double _preco = 0.0;\n  double get preco => _preco;\n  set preco(double valor) {\n    if (valor >= 0) _preco = valor;\n  }\n}\n\nvoid main() {\n  var p = Produto();\n  p.preco = -50.0;\n  print(p.preco);\n}",
+        options: [
+          "Lança uma exceção informando preço inválido.",
+          "O preço passa a ser -50.0.",
+          "O valor mantido permanece 0.0, pois a atribuição foi filtrada no setter.",
+          "Erro de compilação."
+        ],
+        answer: 2,
+        exp: "A validação no setter impede a alteração se o valor for negativo."
+      },
+      {
+        q: "Qual é a saída impressa no trecho a seguir?",
+        code: "void main() {\n  List<int> dados = [1, 2, 3, 4, 5];\n  int val = dados.firstWhere((e) => e > 10, orElse: () => -1);\n  print(val);\n}",
+        options: ["null", "-1", "1", "Lança StateError"],
+        answer: 1,
+        exp: "Como nenhum item atende ao critério, o fallback em orElse é acionado retornando -1."
+      },
+      {
+        q: "Considere o código de concatenação com .fold():",
+        code: "void main() {\n  List<String> letras = ['a', 'b', 'c'];\n  String res = letras.fold('INICIO:', (acc, item) => '$acc$item');\n  print(res);\n}",
+        options: ["INICIO:abc", "abcINICIO:", "INICIO: a b c", "Erro de compilação"],
+        answer: 0,
+        exp: "Concatena no valor inicial 'INICIO:', gerando 'INICIO:abc'."
+      },
+      {
+        q: "O que o comando a.difference(b) faz ao ser chamado entre dois conjuntos (Set)?",
+        code: "",
+        options: [
+          "Retorna os elementos presentes apenas em b que não estão em a.",
+          "Retorna os elementos presentes em a que não pertencem a b.",
+          "Retorna os elementos comuns aos dois conjuntos.",
+          "Retorna a soma matemática das diferenças."
+        ],
+        answer: 1,
+        exp: "Definição matemática de diferença entre conjuntos."
+      },
+      {
+        q: "Qual a saída do código abaixo?",
+        code: "void main() {\n  Set<int> a = {1, 2, 3, 4};\n  Set<int> b = {3, 4, 5};\n  print(a.difference(b));\n}",
+        options: ["{1, 2}", "{5}", "{3, 4}", "{1, 2, 5}"],
+        answer: 0,
+        exp: "Elementos em 'a' que não estão em 'b': {1, 2}."
+      },
+      {
+        q: "Sobre arrow functions (=>) em Dart, qual das seguintes afirmativas é verdadeira?",
+        code: "",
+        options: [
+          "É uma sintaxe utilizada exclusivamente em construtores.",
+          "Substitui blocos { return expressão; } para funções contendo uma única expressão.",
+          "Permite múltiplos comandos com if-else e for sem chaves.",
+          "Converte qualquer retorno em um tipo Future."
+        ],
+        answer: 1,
+        exp: "Regra estrita de sintaxe para Arrow Functions no Dart."
+      },
+      {
+        q: "Qual será o resultado exibido no console?",
+        code: "void main() {\n  List<int> n = [2, 3, 4];\n  int res = n.fold(0, (acc, e) => acc + (e * e));\n  print(res);\n}",
+        options: ["9", "29", "81", "18"],
+        answer: 1,
+        exp: "Soma dos quadrados: 0 + 2² + 3² + 4² = 4 + 9 + 16 = 29."
+      },
+      {
+        q: "Analise a instrução de leitura do código abaixo com Null Safety:",
+        code: "void main() {\n  List<int?> pontos = [10, null, 20];\n  int soma = 0;\n  for (var p in pontos) {\n    soma += p ?? 5;\n  }\n  print(soma);\n}",
+        options: ["30", "35", "Lança exceção de Nulo.", "Erro de compilação."],
+        answer: 1,
+        exp: "Itera elementos: 10 + (null vira 5) + 20 = 35."
+      }
+    ];
+
+    // --- DADOS DOS FLASHCARDS ---
+    const flashcards = [
+      { f: "Diferença entre .reduce() e .fold()", b: "O .reduce() usa o 1º elemento como acumulador e exige lista não vazia. O .fold() permite definir um valor inicial customizado de qualquer tipo." },
+      { f: "Complexidade da busca: List vs Set", b: "List.contains() realiza busca linear O(n). Set.contains() realiza busca via Hash em tempo constante O(1)." },
+      { f: "Comportamento do operador ?.", b: "Acessa a propriedade apenas se o objeto NÃO FOR NULO. Se for nulo, retorna null com segurança." },
+      { f: "Comportamento do operador ??", b: "Retorna o valor da esquerda se não for nulo; caso contrário, retorna o valor da direita (ex: a ?? b)." },
+      { f: "Comportamento do operador !", b: "Operador de asserção ('confie em mim'). Converte tipo T? para T não nulo. Lança erro se o valor for null." },
+      { f: "Privacidade de membros em Dart (_)", b: "O prefixo _ limita o acesso ao NÍVEL DO ARQUIVO/BIBLIOTECA (library-level), e não à classe." },
+      { f: "Mutabilidade: final vs const em Coleções", b: "final impede reatribuição da variável, mas permite modificar os itens (.add). const cria uma coleção 100% imutável." },
+      { f: "Propriedade fundamental do Set", b: "Coleção não ordenada de elementos ÚNICOS (ignora duplicatas automaticamente)." },
+      { f: "O que faz o método .where()?", b: "Filtra os elementos de uma coleção que atendem a uma condição booleana, retornando um novo Iterable." },
+      { f: "O que faz o operador ... (Spread)?", b: "Expande os elementos de uma coleção dentro de outra coleção de forma declarativa." },
+      { f: "Significado de Sound Null Safety", b: "Garantia do compilador de que variáveis declaradas como não anuláveis jamais conterão o valor null em execução." },
+      { f: "Operador ~/ em Dart", b: "Realiza a divisão de números resultando em um VALOR INTEIRO (descarta a parte fracionária)." }
+    ];
+
+    // --- LÓGICA DA APLICAÇÃO ---
+    let answeredCount = 0;
+
+    function renderQuiz() {
+      const listContainer = document.getElementById('quiz-list');
+      listContainer.innerHTML = '';
+
+      questions.forEach((q, index) => {
+        const card = document.createElement('div');
+        card.className = 'quiz-card';
+
+        let codeBlock = q.code ? `<pre><code>${escapeHtml(q.code)}</code></pre>` : '';
+
+        card.innerHTML = `
+          <div class="question-header">Questão ${index + 1}</div>
+          <div class="question-title">${q.q}</div>
+          ${codeBlock}
+          <div class="options">
+            ${q.options.map((opt, i) => `
+              <button class="option-btn" onclick="checkAnswer(${index},${i}, this)">
+                ${String.fromCharCode(97 + i)})${escapeHtml(opt)}
+              </button>
+            `).join('')}
+          </div>
+          <div class="explanation" id="exp-${index}">
+            <strong>Explicação:</strong> ${q.exp}
+          </div>
+        `;
+        listContainer.appendChild(card);
+      });
+    }
+
+    function checkAnswer(qIdx, optIdx, btn) {
+      const parent = btn.parentElement;
+      const buttons = parent.querySelectorAll('.option-btn');
+      const qData = questions[qIdx];
+      const expDiv = document.getElementById(`exp-${qIdx}`);
+
+      // Desabilita todos os botões da questão selecionada
+      buttons.forEach((b, i) => {
+        b.disabled = true;
+        if (i === qData.answer) {
+          b.classList.add('correct');
+        }
+      });
+
+      if (optIdx !== qData.answer) {
+        btn.classList.add('wrong');
+      }
+
+      expDiv.classList.add('visible');
+
+      // Atualiza placar se for primeira resposta
+      if (!parent.dataset.answered) {
+        parent.dataset.answered = "true";
+        answeredCount++;
+        document.getElementById('score').innerText = answeredCount;
+      }
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
+
+      event.target.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // Lógica Flashcards
+    let currentCardIndex = 0;
+
+    function updateCardUI() {
+      const cardElem = document.getElementById('active-card');
+      cardElem.classList.remove('flipped');
+      
+      setTimeout(() => {
+        document.getElementById('card-front-text').innerText = flashcards[currentCardIndex].f;
+        document.getElementById('card-back-text').innerText = flashcards[currentCardIndex].b;
+        document.getElementById('card-counter').innerText = `${currentCardIndex + 1} / ${flashcards.length}`;
+      }, 150);
+    }
+
+    function flipCard() {
+      document.getElementById('active-card').classList.toggle('flipped');
+    }
+
+    function nextCard() {
+      if (currentCardIndex < flashcards.length - 1) {
+        currentCardIndex++;
+        updateCardUI();
+      }
+    }
+
+    function prevCard() {
+      if (currentCardIndex > 0) {
+        currentCardIndex--;
+        updateCardUI();
+      }
+    }
+
+    // Inicialização
+    window.onload = () => {
+      renderQuiz();
+      updateCardUI();
+    };
+  </script>
+</body>
+</html>
