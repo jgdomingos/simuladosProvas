@@ -1,775 +1,1187 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="h-full">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simulado & Flashcards - Desenvolvimento de Aplicações (Dart/Flutter)</title>
-  <style>
-    :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --primary: #38bdf8;
-      --primary-hover: #0284c7;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --correct: #22c55e;
-      --wrong: #ef4444;
-      --border: #334155;
-      --code-bg: #090d16;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    body {
-      background-color: var(--bg-color);
-      color: var(--text);
-      line-height: 1.6;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
-
-    header {
-      text-align: center;
-      margin-bottom: 30px;
-      max-width: 800px;
-    }
-
-    header h1 {
-      color: var(--primary);
-      font-size: 2rem;
-      margin-bottom: 8px;
-    }
-
-    header p {
-      color: var(--text-muted);
-    }
-
-    .tabs {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .tab-btn {
-      background-color: var(--card-bg);
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s;
-    }
-
-    .tab-btn.active, .tab-btn:hover {
-      background-color: var(--primary);
-      color: #000;
-      border-color: var(--primary);
-    }
-
-    .container {
-      width: 100%;
-      max-width: 800px;
-    }
-
-    .section-content {
-      display: none;
-    }
-
-    .section-content.active {
-      display: block;
-    }
-
-    /* Estilos do Quiz */
-    .quiz-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-    }
-
-    .question-header {
-      font-weight: bold;
-      color: var(--primary);
-      margin-bottom: 12px;
-      font-size: 1.1rem;
-    }
-
-    .question-title {
-      font-size: 1.05rem;
-      margin-bottom: 16px;
-    }
-
-    pre {
-      background-color: var(--code-bg);
-      padding: 14px;
-      border-radius: 8px;
-      overflow-x: auto;
-      font-family: 'Consolas', 'Courier New', Courier, monospace;
-      font-size: 0.9rem;
-      color: #e2e8f0;
-      border: 1px solid var(--border);
-      margin-bottom: 16px;
-    }
-
-    .options {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .option-btn {
-      background-color: #0f172a;
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 12px 16px;
-      border-radius: 8px;
-      text-align: left;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-size: 0.95rem;
-    }
-
-    .option-btn:hover:not(:disabled) {
-      border-color: var(--primary);
-      background-color: #1a2436;
-    }
-
-    .option-btn.correct {
-      background-color: rgba(34, 197, 94, 0.2) !important;
-      border-color: var(--correct) !important;
-      color: #4ade80 !important;
-      font-weight: bold;
-    }
-
-    .option-btn.wrong {
-      background-color: rgba(239, 68, 68, 0.2) !important;
-      border-color: var(--wrong) !important;
-      color: #f87171 !important;
-    }
-
-    .explanation {
-      margin-top: 16px;
-      padding: 14px;
-      border-radius: 8px;
-      background-color: rgba(56, 189, 248, 0.1);
-      border-left: 4px solid var(--primary);
-      font-size: 0.9rem;
-      display: none;
-    }
-
-    .explanation.visible {
-      display: block;
-    }
-
-    /* Placar Final */
-    .score-board {
-      background-color: var(--card-bg);
-      padding: 20px;
-      border-radius: 12px;
-      text-align: center;
-      margin-bottom: 24px;
-      border: 1px solid var(--border);
-    }
-
-    .score-board h2 {
-      color: var(--primary);
-    }
-
-    /* Estilos dos Flashcards */
-    .flashcard-container {
-      perspective: 1000px;
-      height: 280px;
-      cursor: pointer;
-      margin-bottom: 20px;
-    }
-
-    .flashcard {
-      width: 100%;
-      height: 100%;
-      position: relative;
-      transform-style: preserve-3d;
-      transition: transform 0.6s;
-    }
-
-    .flashcard.flipped {
-      transform: rotateY(180deg);
-    }
-
-    .card-face {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      backface-visibility: hidden;
-      border-radius: 12px;
-      padding: 30px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      border: 1px solid var(--border);
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-    }
-
-    .card-front {
-      background-color: var(--card-bg);
-      color: var(--text);
-    }
-
-    .card-front h3 {
-      color: var(--primary);
-      font-size: 1.3rem;
-    }
-
-    .card-back {
-      background-color: #0f172a;
-      color: #e2e8f0;
-      transform: rotateY(180deg);
-      border-color: var(--primary);
-    }
-
-    .card-back p {
-      font-size: 1.1rem;
-    }
-
-    .flashcard-nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .nav-btn {
-      background-color: var(--card-bg);
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-
-    .nav-btn:hover {
-      background-color: var(--primary);
-      color: #000;
-    }
-  </style>
-</head>
-<body>
-
-  <header>
-    <h1>Plataforma de Estudos: Dart & Flutter</h1>
-    <p>Treino prático com leitura de código, Null Safety, Coleções e POO</p>
-  </header>
-
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('quiz')">📝 Simulado (40 Qs)</button>
-    <button class="tab-btn" onclick="switchTab('flashcards')">🃏 Flashcards</button>
-  </div>
-
-  <div class="container">
-    
-    <!-- SESSÃO SIMULADO -->
-    <div id="quiz" class="section-content active">
-      <div class="score-board">
-        <h2>Progresso: <span id="score">0</span> / <span id="total-questions">40</span> Respondidas</h2>
-      </div>
-      <div id="quiz-list"></div>
-    </div>
-
-    <!-- SESSÃO FLASHCARDS -->
-    <div id="flashcards" class="section-content">
-      <div class="flashcard-container" onclick="flipCard()">
-        <div class="flashcard" id="active-card">
-          <div class="card-face card-front">
-            <span style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">CLIQUE PARA VIRAR</span>
-            <h3 id="card-front-text">Carregando...</h3>
-          </div>
-          <div class="card-face card-back">
-            <p id="card-back-text">Carregando...</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="flashcard-nav">
-        <button class="nav-btn" onclick="prevCard()">Anterior</button>
-        <span id="card-counter" style="color:var(--text-muted)">1 / 12</span>
-        <button class="nav-btn" onclick="nextCard()">Próximo</button>
-      </div>
-    </div>
-
-  </div>
-
-  <script>
-    // --- DADOS DO SIMULADO ---
-    const questions = [
-      {
-        q: "Dado o trecho de código abaixo, qual será a saída impressa no console?",
-        code: "void main() {\n  List<int> nums = [1, 2, 3, 4, 5];\n  var res = nums.where((n) => n > 2).map((n) => n * 2);\n  print(res.runtimeType);\n}",
-        options: ["List<int>", "MappedListIterable<int, int> ou Iterable<int>", "Set<int>", "int"],
-        answer: 1,
-        exp: ".where() e .map() retornam objetos do tipo Iterable (lazy evaluation), e não uma List imediata."
-      },
-      {
-        q: "Qual o resultado final da execução do código a seguir?",
-        code: "void main() {\n  List<int> lista = [10, 20, 30];\n  int resultado = lista.reduce((acc, el) => acc + el);\n  print(resultado);\n}",
-        options: ["60", "[10, 20, 30]", "0", "Erro em tempo de compilação"],
-        answer: 0,
-        exp: "10 + 20 + 30 = 60."
-      },
-      {
-        q: "Qual o valor da variável total após a execução do código?",
-        code: "void main() {\n  List<int> nums = [1, 2, 3];\n  int total = nums.fold(10, (acc, el) => acc + el);\n  print(total);\n}",
-        options: ["6", "16", "10", "15"],
-        answer: 1,
-        exp: "O acumulador inicia em 10. Soma: 10 + 1 + 2 + 3 = 16."
-      },
-      {
-        q: "O que acontece se chamarmos o método .reduce() em uma lista vazia (List<int> vazia = [];)?",
-        code: "",
-        options: ["Retorna 0.", "Retorna null.", "Lança uma exceção do tipo StateError em tempo de execução.", "O código não compila."],
-        answer: 2,
-        exp: ".reduce() necessita de ao menos 1 elemento para servir como valor inicial do acumulador."
-      },
-      {
-        q: "Considere o código abaixo. O que será impresso?",
-        code: "void main() {\n  List<String> nomes = ['Ana', 'Léo', 'Ana', 'Bia'];\n  Set<String> conjunto = nomes.toSet();\n  print(conjunto.length);\n}",
-        options: ["4", "3", "2", "Erro: Set não aceita toSet()"],
-        answer: 1,
-        exp: "O Set remove automaticamente duplicatas. 'Ana' repetido é desconsiderado."
-      },
-      {
-        q: "Analise a leitura de código e selecione a alternativa com o resultado correto:",
-        code: "void main() {\n  Map<String, int> estoque = {'Caneta': 10, 'Caderno': 5};\n  estoque.putIfAbsent('Caneta', () => 20);\n  estoque.putIfAbsent('Lápis', () => 15);\n  print(estoque['Caneta']);\n  print(estoque['Lápis']);\n}",
-        options: ["20 e 15", "10 e 15", "20 e null", "10 e null"],
-        answer: 1,
-        exp: "O putIfAbsent insere o valor apenas se a chave não existir. Como 'Caneta' já existia, manteve 10."
-      },
-      {
-        q: "O que será impresso no console ao executar o trecho abaixo?",
-        code: "void main() {\n  String? nome;\n  print(nome?.length ?? 0);\n}",
-        options: ["null", "0", "Erro de compilação", "Throws NullPointerException"],
-        answer: 1,
-        exp: "nome?.length resolve para null. O operador ?? 0 converte o resultado nulo para 0."
-      },
-      {
-        q: "Qual é a função do operador ! (Null Assertion Operator) no Dart?",
-        code: "",
-        options: ["Converte uma variável em booleano negado.", "Garante ao compilador que a expressão anulável não é null naquele momento.", "Atribui um valor padrão caso a variável seja nula.", "Torna o tipo da variável opcional."],
-        answer: 1,
-        exp: "O operador ! faz o unwrap forçado assinalando que a variável não é nula."
-      },
-      {
-        q: "O que acontece na execução deste código?",
-        code: "void main() {\n  String? texto;\n  print(texto!.length);\n}",
-        options: ["Imprime 0.", "Imprime null.", "Lança uma exceção em tempo de execução (Null check operator used on a null value).", "Erro de compilação avisando que a variável é nula."],
-        answer: 2,
-        exp: "Ao tentar acessar propriedade de uma variável null através do operador !, o Dart lança uma exceção."
-      },
-      {
-        q: "Qual a diferença principal entre fold() e reduce() ao processar coleções em Dart?",
-        code: "",
-        options: [
-          "reduce() aceita apenas Strings; fold() aceita apenas números.",
-          "fold() exige a definição de um valor inicial acumulador, enquanto reduce() utiliza o primeiro elemento como inicial.",
-          "reduce() não altera a lista original; fold() modifica a lista inplace.",
-          "Não há diferença prática."
-        ],
-        answer: 1,
-        exp: "fold(inicial, (acc, item) => ...) recebe o valor inicial explicitamente; reduce assume o primeiro elemento."
-      },
-      {
-        q: "O que será exibido no console?",
-        code: "void main() {\n  List<int> dados = [2, 4, 6, 8];\n  var r = dados.fold(1, (acc, e) => acc * e);\n  print(r);\n}",
-        options: ["0", "384", "192", "24"],
-        answer: 1,
-        exp: "Acumulador inicial 1 * 2 * 4 * 6 * 8 = 384."
-      },
-      {
-        q: "Qual é a saída impressa no seguinte trecho?",
-        code: "void main() {\n  Map<String, String?> usuario = {'nome': 'Carlos', 'apelido': null};\n  String exibi = usuario['apelido'] ?? usuario['nome'] ?? 'Anônimo';\n  print(exibi);\n}",
-        options: ["null", "Anônimo", "Carlos", "Erro de sintaxe"],
-        answer: 2,
-        exp: "usuario['apelido'] é null. O operador ?? busca o próximo válido: usuario['nome'], que é 'Carlos'."
-      },
-      {
-        q: "O que acontece ao tentar compilar o código abaixo em Dart com Sound Null Safety?",
-        code: "void main() {\n  String nome = 'Maria';\n  nome = null;\n  print(nome);\n}",
-        options: ["Imprime null.", "Ocorre um erro de compilação, pois tipos não anuláveis não podem receber null.", "Imprime uma String vazia.", "A variável é convertida para dynamic automaticamente."],
-        answer: 1,
-        exp: "Sem o caractere ? na declaração (String?), a variável não pode aceitar null."
-      },
-      {
-        q: "Dado o código abaixo, qual é o valor final impresso?",
-        code: "void main() {\n  Set<int> a = {1, 2, 3};\n  Set<int> b = {2, 3, 4};\n  Set<int> c = a.intersection(b);\n  print(c);\n}",
-        options: ["{1, 2, 3, 4}", "{1, 4}", "{2, 3}", "{}"],
-        answer: 2,
-        exp: "intersection retorna os elementos comuns aos dois conjuntos: {2, 3}."
-      },
-      {
-        q: "Qual será a saída do código a seguir?",
-        code: "void main() {\n  List<int> numeros = [10, 15, 20, 25];\n  int somaPares = numeros.where((n) => n % 2 == 0).fold(0, (acc, n) => acc + n);\n  print(somaPares);\n}",
-        options: ["30", "40", "70", "10"],
-        answer: 0,
-        exp: ".where filtra 10 e 20. O .fold soma 0 + 10 + 20 = 30."
-      },
-      {
-        q: "O que o operador ?. (Null-aware navigation) faz especificamente?",
-        code: "",
-        options: [
-          "Força a execução do método de um objeto mesmo que seja nulo.",
-          "Avalia o membro à direita somente se a expressão à esquerda não for nula; caso contrário, retorna null.",
-          "Atribui um valor apenas se o ponteiro for nulo.",
-          "Verifica se o valor é igual a verdadeiro."
-        ],
-        answer: 1,
-        exp: "Essa é a definição oficial do operador de navegação segura ?."
-      },
-      {
-        q: "Qual será a saída do código a seguir?",
-        code: "void main() {\n  Map<String, dynamic> dados = {'a': 1, 'b': 2, 'c': 3};\n  var filtrado = dados.entries.where((e) => e.value > 1).map((e) => e.key);\n  print(filtrado.toList());\n}",
-        options: ["[a]", "[b, c]", "[2, 3]", "{b: 2, c: 3}"],
-        answer: 1,
-        exp: "Filtra entradas com valor > 1 ('b': 2 e 'c': 3) e pega apenas as chaves ('b', 'c')."
-      },
-      {
-        q: "Em relação ao uso de final e const em coleções, qual instrução lança um erro em tempo de execução?",
-        code: "void main() {\n  final List<int> a = [1, 2];\n  const List<int> b = [1, 2];\n  a.add(3); // Linha 1\n  b.add(3); // Linha 2\n}",
-        options: ["Apenas a Linha 1 gera erro.", "Apenas a Linha 2 gera erro (UnsupportedError / Immutable list).", "Ambas as linhas geram erro de compilação.", "Nenhuma das linhas gera erro."],
-        answer: 1,
-        exp: "Listas const criam coleções imutáveis na memória. Tentar modificar lança exceção em runtime."
-      },
-      {
-        q: "Qual o comportamento de visibilidade de membros marcados com _ (underline) em Dart?",
-        code: "",
-        options: [
-          "O elemento torna-se protegido (acessível apenas por subclasses).",
-          "O elemento torna-se estritamente privado à própria classe.",
-          "O elemento torna-se privado ao nível do arquivo/biblioteca (library-level scope).",
-          "O elemento só pode ser lido, mas não alterado."
-        ],
-        answer: 2,
-        exp: "O escopo privado do Dart engloba todo o arquivo (library) onde o elemento foi declarado."
-      },
-      {
-        q: "O que o seguinte código imprime?",
-        code: "void main() {\n  List<String> palavras = ['Dart', 'Flutter', 'Mobile'];\n  String resultado = palavras.reduce((acc, el) => '$acc-$el');\n  print(resultado);\n}",
-        options: ["-Dart-Flutter-Mobile", "Dart-Flutter-Mobile", "DartFlutterMobile", "Erro de sintaxe"],
-        answer: 1,
-        exp: "Intercala o separador '-' entre cada elemento."
-      },
-      {
-        q: "Qual será a saída do teste de mesa abaixo?",
-        code: "void main() {\n  List<int> lista = [5, 10, 15];\n  int x = lista.fold(5, (acc, e) => acc + e);\n  print(x);\n}",
-        options: ["30", "35", "25", "5"],
-        answer: 1,
-        exp: "Acumulador inicia em 5. Soma: 5 + 5 + 10 + 15 = 35."
-      },
-      {
-        q: "O que o operador ??= faz em Dart?",
-        code: "",
-        options: [
-          "Compara se dois objetos nulos são idênticos.",
-          "Atribui um valor à variável apenas se essa variável for nula no momento.",
-          "Atribui um valor e lança exceção em caso de incompatibilidade.",
-          "Desfaz a anulação de uma variável."
-        ],
-        answer: 1,
-        exp: "x ??= 10 significa 'se x for nulo, atribua 10'."
-      },
-      {
-        q: "Analise o código e selecione a opção correta:",
-        code: "void main() {\n  List<int?> listaComNulos = [1, null, 3, null, 5];\n  var naoNulos = listaComNulos.where((e) => e != null).map((e) => e!).toList();\n  print(naoNulos);\n}",
-        options: ["[1, 3, 5]", "[1, null, 3, null, 5]", "Lança exceção ao encontrar null.", "[]"],
-        answer: 0,
-        exp: "Filtra os nulos e aplica o unwrap com !, gerando [1, 3, 5]."
-      },
-      {
-        q: "Sobre a estrutura Map em Dart, é INCORRETO afirmar:",
-        code: "",
-        options: [
-          "As chaves devem ser únicas dentro de uma mesma instância.",
-          "Tentar acessar uma chave inexistente resulta em uma exceção de parada imediata.",
-          "Um JSON decodificado é tipicamente representado como Map<String, dynamic>.",
-          "Map possui a propriedade .keys e .values para inspeção."
-        ],
-        answer: 1,
-        exp: "Acessar uma chave inexistente em um Map simplesmente retorna null, sem erro."
-      },
-      {
-        q: "O que será impresso após a execução do código a seguir?",
-        code: "void main() {\n  List<int> a = [1, 2, 3];\n  List<int> b = [0, ...a, 4];\n  print(b);\n}",
-        options: ["[0, [1, 2, 3], 4]", "[0, 1, 2, 3, 4]", "[1, 2, 3, 0, 4]", "Erro de compilação devido ao uso de ..."],
-        answer: 1,
-        exp: "O operador spread (...) desembrulha a lista 'a' dentro da lista 'b'."
-      },
-      {
-        q: "Qual é a saída do código a seguir?",
-        code: "void main() {\n  bool ativo = true;\n  List<String> itens = ['Item 1', if (ativo) 'Item 2', 'Item 3'];\n  print(itens.length);\n}",
-        options: ["2", "3", "4", "Erro de sintaxe"],
-        answer: 1,
-        exp: "Com collection if, como ativo é true, 'Item 2' entra na lista, totalizando 3 elementos."
-      },
-      {
-        q: "Qual a diferença técnica de complexidade (Big O) ao buscar a existência de um elemento (contains) em uma List vs Set?",
-        code: "",
-        options: [
-          "List é O(1) e Set é O(n).",
-          "List é O(n) no pior caso, enquanto Set é O(1) em média por conta do cálculo de hash.",
-          "Ambos executam com complexidade O(1).",
-          "Ambos executam com complexidade O(log n)."
-        ],
-        answer: 1,
-        exp: "Set utiliza tabela hash, permitindo verificação em tempo constante O(1)."
-      },
-      {
-        q: "O que o método .expand() faz em uma coleção no Dart?",
-        code: "",
-        options: [
-          "Duplica a quantidade de elementos de uma lista.",
-          "Mapeia cada elemento para um Iterable e nivela (flattens) o resultado em um único Iterable.",
-          "Aumenta dinamicamente a capacidade da memória RAM.",
-          "Ordena uma lista do menor para o maior."
-        ],
-        answer: 1,
-        exp: ".expand() achata coleções aninhadas."
-      },
-      {
-        q: "Qual a saída do código abaixo?",
-        code: "void main() {\n  List<List<int>> matriz = [[1, 2], [3, 4]];\n  var listaUnica = matriz.expand((element) => element).toList();\n  print(listaUnica);\n}",
-        options: ["[[1, 2], [3, 4]]", "[1, 2, 3, 4]", "[3, 7]", "10"],
-        answer: 1,
-        exp: "Expande as sublistas em um único nível: [1, 2, 3, 4]."
-      },
-      {
-        q: "O que acontece ao executar este código com parâmetro nomeado?",
-        code: "double calcularArea({required double largura, double altura = 1.0}) {\n  return largura * altura;\n}\n\nvoid main() {\n  print(calcularArea(largura: 5.0));\n}",
-        options: ["Lança erro por falta do parâmetro altura.", "Retorna 5.0", "Retorna 0.0", "Erro de compilação por usar chaves {}"],
-        answer: 1,
-        exp: "O parâmetro nomeado altura assume o valor padrão 1.0. 5.0 * 1.0 = 5.0."
-      },
-      {
-        q: "Qual o resultado impresso no console?",
-        code: "void main() {\n  List<int> valores = [10, 20, 30];\n  var res = valores.map((e) => e ~/ 3).toList();\n  print(res);\n}",
-        options: ["[3.33, 6.66, 10.0]", "[3, 6, 10]", "[1, 2, 3]", "Erro de compilação"],
-        answer: 1,
-        exp: "O operador ~/ faz divisão inteira descartando decimais: 10~/3=3, 20~/3=6, 30~/3=10."
-      },
-      {
-        q: "Analise o comportamento do código abaixo e identifique a saída:",
-        code: "void main() {\n  Set<int> nums = {10, 20, 30};\n  bool inseriu = nums.add(20);\n  print('$inseriu |${nums.length}');\n}",
-        options: ["true | 4", "false | 3", "true | 3", "false | 4"],
-        answer: 1,
-        exp: "Set não aceita duplicatas. A adição do 20 falha (retorna false) e o tamanho permanece 3."
-      },
-      {
-        q: "O que acontece no código abaixo durante a compilação/execução?",
-        code: "class Produto {\n  double _preco = 0.0;\n  double get preco => _preco;\n  set preco(double valor) {\n    if (valor >= 0) _preco = valor;\n  }\n}\n\nvoid main() {\n  var p = Produto();\n  p.preco = -50.0;\n  print(p.preco);\n}",
-        options: [
-          "Lança uma exceção informando preço inválido.",
-          "O preço passa a ser -50.0.",
-          "O valor mantido permanece 0.0, pois a atribuição foi filtrada no setter.",
-          "Erro de compilação."
-        ],
-        answer: 2,
-        exp: "A validação no setter impede a alteração se o valor for negativo."
-      },
-      {
-        q: "Qual é a saída impressa no trecho a seguir?",
-        code: "void main() {\n  List<int> dados = [1, 2, 3, 4, 5];\n  int val = dados.firstWhere((e) => e > 10, orElse: () => -1);\n  print(val);\n}",
-        options: ["null", "-1", "1", "Lança StateError"],
-        answer: 1,
-        exp: "Como nenhum item atende ao critério, o fallback em orElse é acionado retornando -1."
-      },
-      {
-        q: "Considere o código de concatenação com .fold():",
-        code: "void main() {\n  List<String> letras = ['a', 'b', 'c'];\n  String res = letras.fold('INICIO:', (acc, item) => '$acc$item');\n  print(res);\n}",
-        options: ["INICIO:abc", "abcINICIO:", "INICIO: a b c", "Erro de compilação"],
-        answer: 0,
-        exp: "Concatena no valor inicial 'INICIO:', gerando 'INICIO:abc'."
-      },
-      {
-        q: "O que o comando a.difference(b) faz ao ser chamado entre dois conjuntos (Set)?",
-        code: "",
-        options: [
-          "Retorna os elementos presentes apenas em b que não estão em a.",
-          "Retorna os elementos presentes em a que não pertencem a b.",
-          "Retorna os elementos comuns aos dois conjuntos.",
-          "Retorna a soma matemática das diferenças."
-        ],
-        answer: 1,
-        exp: "Definição matemática de diferença entre conjuntos."
-      },
-      {
-        q: "Qual a saída do código abaixo?",
-        code: "void main() {\n  Set<int> a = {1, 2, 3, 4};\n  Set<int> b = {3, 4, 5};\n  print(a.difference(b));\n}",
-        options: ["{1, 2}", "{5}", "{3, 4}", "{1, 2, 5}"],
-        answer: 0,
-        exp: "Elementos em 'a' que não estão em 'b': {1, 2}."
-      },
-      {
-        q: "Sobre arrow functions (=>) em Dart, qual das seguintes afirmativas é verdadeira?",
-        code: "",
-        options: [
-          "É uma sintaxe utilizada exclusivamente em construtores.",
-          "Substitui blocos { return expressão; } para funções contendo uma única expressão.",
-          "Permite múltiplos comandos com if-else e for sem chaves.",
-          "Converte qualquer retorno em um tipo Future."
-        ],
-        answer: 1,
-        exp: "Regra estrita de sintaxe para Arrow Functions no Dart."
-      },
-      {
-        q: "Qual será o resultado exibido no console?",
-        code: "void main() {\n  List<int> n = [2, 3, 4];\n  int res = n.fold(0, (acc, e) => acc + (e * e));\n  print(res);\n}",
-        options: ["9", "29", "81", "18"],
-        answer: 1,
-        exp: "Soma dos quadrados: 0 + 2² + 3² + 4² = 4 + 9 + 16 = 29."
-      },
-      {
-        q: "Analise a instrução de leitura do código abaixo com Null Safety:",
-        code: "void main() {\n  List<int?> pontos = [10, null, 20];\n  int soma = 0;\n  for (var p in pontos) {\n    soma += p ?? 5;\n  }\n  print(soma);\n}",
-        options: ["30", "35", "Lança exceção de Nulo.", "Erro de compilação."],
-        answer: 1,
-        exp: "Itera elementos: 10 + (null vira 5) + 20 = 35."
-      }
-    ];
-
-    // --- DADOS DOS FLASHCARDS ---
-    const flashcards = [
-      { f: "Diferença entre .reduce() e .fold()", b: "O .reduce() usa o 1º elemento como acumulador e exige lista não vazia. O .fold() permite definir um valor inicial customizado de qualquer tipo." },
-      { f: "Complexidade da busca: List vs Set", b: "List.contains() realiza busca linear O(n). Set.contains() realiza busca via Hash em tempo constante O(1)." },
-      { f: "Comportamento do operador ?.", b: "Acessa a propriedade apenas se o objeto NÃO FOR NULO. Se for nulo, retorna null com segurança." },
-      { f: "Comportamento do operador ??", b: "Retorna o valor da esquerda se não for nulo; caso contrário, retorna o valor da direita (ex: a ?? b)." },
-      { f: "Comportamento do operador !", b: "Operador de asserção ('confie em mim'). Converte tipo T? para T não nulo. Lança erro se o valor for null." },
-      { f: "Privacidade de membros em Dart (_)", b: "O prefixo _ limita o acesso ao NÍVEL DO ARQUIVO/BIBLIOTECA (library-level), e não à classe." },
-      { f: "Mutabilidade: final vs const em Coleções", b: "final impede reatribuição da variável, mas permite modificar os itens (.add). const cria uma coleção 100% imutável." },
-      { f: "Propriedade fundamental do Set", b: "Coleção não ordenada de elementos ÚNICOS (ignora duplicatas automaticamente)." },
-      { f: "O que faz o método .where()?", b: "Filtra os elementos de uma coleção que atendem a uma condição booleana, retornando um novo Iterable." },
-      { f: "O que faz o operador ... (Spread)?", b: "Expande os elementos de uma coleção dentro de outra coleção de forma declarativa." },
-      { f: "Significado de Sound Null Safety", b: "Garantia do compilador de que variáveis declaradas como não anuláveis jamais conterão o valor null em execução." },
-      { f: "Operador ~/ em Dart", b: "Realiza a divisão de números resultando em um VALOR INTEIRO (descarta a parte fracionária)." }
-    ];
-
-    // --- LÓGICA DA APLICAÇÃO ---
-    let answeredCount = 0;
-
-    function renderQuiz() {
-      const listContainer = document.getElementById('quiz-list');
-      listContainer.innerHTML = '';
-
-      questions.forEach((q, index) => {
-        const card = document.createElement('div');
-        card.className = 'quiz-card';
-
-        let codeBlock = q.code ? `<pre><code>${escapeHtml(q.code)}</code></pre>` : '';
-
-        card.innerHTML = `
-          <div class="question-header">Questão ${index + 1}</div>
-          <div class="question-title">${q.q}</div>
-          ${codeBlock}
-          <div class="options">
-            ${q.options.map((opt, i) => `
-              <button class="option-btn" onclick="checkAnswer(${index},${i}, this)">
-                ${String.fromCharCode(97 + i)})${escapeHtml(opt)}
-              </button>
-            `).join('')}
-          </div>
-          <div class="explanation" id="exp-${index}">
-            <strong>Explicação:</strong> ${q.exp}
-          </div>
-        `;
-        listContainer.appendChild(card);
-      });
-    }
-
-    function checkAnswer(qIdx, optIdx, btn) {
-      const parent = btn.parentElement;
-      const buttons = parent.querySelectorAll('.option-btn');
-      const qData = questions[qIdx];
-      const expDiv = document.getElementById(`exp-${qIdx}`);
-
-      // Desabilita todos os botões da questão selecionada
-      buttons.forEach((b, i) => {
-        b.disabled = true;
-        if (i === qData.answer) {
-          b.classList.add('correct');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revisão de Engenharia de Software - Métodos Ágeis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
         }
-      });
+    </script>
+    <style>
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-full flex flex-col font-sans transition-colors duration-200">
 
-      if (optIdx !== qData.answer) {
-        btn.classList.add('wrong');
-      }
+    <!-- Header principal -->
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-brand-500 text-white rounded-lg shadow">
+                        <i class="fa-solid fa-graduation-cap text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight">Revisão Métodos Ágeis</h1>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">Engenharia de Software & Frameworks</p>
+                    </div>
+                </div>
 
-      expDiv.classList.add('visible');
+                <!-- Tabs de Navegação -->
+                <nav class="flex space-x-1 sm:space-x-2 bg-slate-100 dark:bg-slate-700/50 p-1 rounded-xl">
+                    <button id="tab-quiz-btn" onclick="switchTab('quiz')" class="flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-brand-600 dark:text-brand-500 bg-white dark:bg-slate-800 shadow-sm">
+                        <i class="fa-solid fa-list-check"></i>
+                        <span>Simulador (50 Q)</span>
+                    </button>
+                    <button id="tab-flashcards-btn" onclick="switchTab('flashcards')" class="flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span>Flashcards (20)</span>
+                    </button>
+                </nav>
 
-      // Atualiza placar se for primeira resposta
-      if (!parent.dataset.answered) {
-        parent.dataset.answered = "true";
-        answeredCount++;
-        document.getElementById('score').innerText = answeredCount;
-      }
-    }
+                <!-- Botão de Tema -->
+                <button onclick="toggleDarkMode()" class="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                    <i id="theme-icon" class="fa-solid fa-moon text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
 
-    function escapeHtml(text) {
-      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    }
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- SEÇÃO 1: SIMULADOR DE PROVA -->
+        <section id="section-quiz" class="space-y-6">
+            <!-- Dashboard do Simulador -->
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                <div class="md:col-span-2">
+                    <h2 class="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                        <span>Simulado Completo de Questões</span>
+                    </h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                        50 questões com foco no Manifesto Ágil, Scrum, Kanban, Lean IT, XP, Crystal, DSDM, SAFe, PERT e Planning Poker.
+                    </p>
+                </div>
+                
+                <div class="flex items-center justify-around bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                    <div class="text-center">
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Respondidas</p>
+                        <p id="quiz-progress-text" class="text-lg font-bold text-slate-800 dark:text-white">0 / 50</p>
+                    </div>
+                    <div class="h-8 w-px bg-slate-200 dark:bg-slate-700"></div>
+                    <div class="text-center">
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Pontuação</p>
+                        <p id="quiz-score-text" class="text-lg font-bold text-brand-600 dark:text-brand-400">0%</p>
+                    </div>
+                </div>
 
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
+                <div class="flex gap-2">
+                    <select id="filter-topic" onchange="filterQuizTopics()" class="w-full bg-slate-100 dark:bg-slate-700 text-xs sm:text-sm font-medium rounded-xl px-3 py-2.5 border-none focus:ring-2 focus:ring-brand-500 text-slate-700 dark:text-slate-200">
+                        <option value="ALL">Todos os Tópicos</option>
+                        <option value="Manifesto">Manifesto Ágil</option>
+                        <option value="Scrum">Scrum</option>
+                        <option value="Kanban">Kanban</option>
+                        <option value="Lean">Lean IT</option>
+                        <option value="XP">Extreme Programming (XP)</option>
+                        <option value="Crystal">Crystal</option>
+                        <option value="DSDM">DSDM</option>
+                        <option value="SAFe">SAFe</option>
+                        <option value="PERT">PERT & Estimativas</option>
+                        <option value="Poker">Planning Poker</option>
+                    </select>
+                </div>
+            </div>
 
-      event.target.classList.add('active');
-      document.getElementById(tabId).classList.add('active');
-    }
+            <!-- Lista de Questões -->
+            <div id="quiz-container" class="space-y-6">
+                <!-- Questões geradas dinamicamente aqui -->
+            </div>
+        </section>
 
-    // Lógica Flashcards
-    let currentCardIndex = 0;
+        <!-- SEÇÃO 2: FLASHCARDS INTERATIVOS -->
+        <section id="section-flashcards" class="hidden space-y-6 max-w-3xl mx-auto">
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm text-center">
+                <h2 class="text-xl font-bold text-slate-800 dark:text-white">Deck de Flashcards</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    Clique no cartão para alternar entre o Conceito e a Explicação.
+                </p>
+            </div>
 
-    function updateCardUI() {
-      const cardElem = document.getElementById('active-card');
-      cardElem.classList.remove('flipped');
-      
-      setTimeout(() => {
-        document.getElementById('card-front-text').innerText = flashcards[currentCardIndex].f;
-        document.getElementById('card-back-text').innerText = flashcards[currentCardIndex].b;
-        document.getElementById('card-counter').innerText = `${currentCardIndex + 1} / ${flashcards.length}`;
-      }, 150);
-    }
+            <!-- Baralho Interativo -->
+            <div class="relative w-full h-80 sm:h-96 perspective-1000">
+                <div id="flashcard" onclick="flipCard()" class="w-full h-full transform-style-3d transition-transform duration-500 cursor-pointer relative rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+                    
+                    <!-- Frente do Card -->
+                    <div class="absolute inset-0 backface-hidden p-8 flex flex-col justify-between items-center text-center">
+                        <div class="w-full flex justify-between items-center">
+                            <span id="fc-category" class="px-3 py-1 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 text-xs font-semibold rounded-full border border-brand-200 dark:border-brand-800/50">Tópico</span>
+                            <span id="fc-counter" class="text-xs font-semibold text-slate-400">1 / 20</span>
+                        </div>
+                        <div class="my-auto">
+                            <i class="fa-regular fa-lightbulb text-brand-500 text-3xl mb-4 opacity-80"></i>
+                            <h3 id="fc-front" class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white px-2">Conceito</h3>
+                        </div>
+                        <p class="text-xs text-slate-400 flex items-center gap-1">
+                            <i class="fa-solid fa-rotate text-xs"></i> Clique para ver a resposta
+                        </p>
+                    </div>
 
-    function flipCard() {
-      document.getElementById('active-card').classList.toggle('flipped');
-    }
+                    <!-- Verso do Card -->
+                    <div class="absolute inset-0 backface-hidden rotate-y-180 p-8 flex flex-col justify-between items-center text-center bg-slate-900 text-white dark:bg-brand-950 rounded-2xl">
+                        <div class="w-full flex justify-between items-center border-b border-slate-700/50 pb-3">
+                            <span class="text-xs font-semibold text-brand-400 uppercase tracking-wider">Resposta / Explicação</span>
+                            <i class="fa-solid fa-check-circle text-emerald-400"></i>
+                        </div>
+                        <div class="my-auto overflow-y-auto custom-scrollbar max-h-48 px-2">
+                            <p id="fc-back" class="text-base sm:text-lg leading-relaxed text-slate-200">Explicação detalhada</p>
+                        </div>
+                        <p class="text-xs text-slate-400 flex items-center gap-1">
+                            <i class="fa-solid fa-rotate text-xs"></i> Clique para voltar à pergunta
+                        </p>
+                    </div>
 
-    function nextCard() {
-      if (currentCardIndex < flashcards.length - 1) {
-        currentCardIndex++;
-        updateCardUI();
-      }
-    }
+                </div>
+            </div>
 
-    function prevCard() {
-      if (currentCardIndex > 0) {
-        currentCardIndex--;
-        updateCardUI();
-      }
-    }
+            <!-- Controles do Baralho -->
+            <div class="flex items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <button onclick="prevCard()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-xl font-medium text-sm flex items-center gap-2 transition">
+                    <i class="fa-solid fa-arrow-left"></i> Anterior
+                </button>
 
-    // Inicialização
-    window.onload = () => {
-      renderQuiz();
-      updateCardUI();
-    };
-  </script>
+                <button onclick="shuffleCards()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-xl font-medium text-sm flex items-center gap-2 transition text-slate-700 dark:text-slate-200" title="Embaralhar">
+                    <i class="fa-solid fa-shuffle text-brand-500"></i> Embaralhar
+                </button>
+
+                <button onclick="nextCard()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-medium text-sm flex items-center gap-2 transition">
+                    Próximo <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Data Store de Questões (50 Questões cobrindo todo o escopo)
+        const questionsData = [
+            // MANIFESTO ÁGIL (1-5)
+            {
+                id: 1,
+                topic: "Manifesto",
+                question: "No Manifesto Ágil, qual das alternativas expressa corretamente um dos valores fundamentais?",
+                options: [
+                    "Processos e ferramentas acima de indivíduos e interações.",
+                    "Documentação abrangente acima de software em funcionamento.",
+                    "Software em funcionamento mais que documentação abrangente.",
+                    "Seguir um plano rígido mais que responder a mudanças."
+                ],
+                answer: 2,
+                explanation: "O Manifesto Ágil valoriza 'Software em funcionamento MAIS QUE documentação abrangente'. Embora haja valor no item da direita, valoriza-se mais o item da esquerda."
+            },
+            {
+                id: 2,
+                topic: "Manifesto",
+                question: "Qual é a prioridade máxima segundo os 12 princípios do Manifesto Ágil?",
+                options: [
+                    "Satisfazer o cliente por meio da entrega precoce e contínua de software com valor.",
+                    "Minimizar o custo de desenvolvimento inicial do projeto.",
+                    "Garantir a adesão total aos requisitos iniciais contratados.",
+                    "Aumentar a quantidade de documentação técnica por ciclo."
+                ],
+                answer: 0,
+                explanation: "O primeiro princípio do Manifesto declara: 'Nossa maior prioridade é satisfazer o cliente através da entrega contínua e adiantada de software com valor'."
+            },
+            {
+                id: 3,
+                topic: "Manifesto",
+                question: "O Manifesto Ágil prefere 'Responder a mudanças' em detrimento de qual atitude?",
+                options: [
+                    "Negociação de contratos.",
+                    "Seguir um plano.",
+                    "Indivíduos e interações.",
+                    "Software em funcionamento."
+                ],
+                answer: 1,
+                explanation: "O quarto valor do Manifesto Ágil é: 'Responder a mudanças mais que seguir um plano'."
+            },
+            {
+                id: 4,
+                topic: "Manifesto",
+                question: "Segundo os princípios ágeis, a forma mais eficiente e eficaz de transmitir informações para e entre uma equipe de desenvolvimento é:",
+                options: [
+                    "Por meio de relatórios semanais por e-mail.",
+                    "Através de documentação formal e diagramas UML detalhados.",
+                    "A conversa cara a cara (presencial ou direta).",
+                    "Abertura de chamados em ferramentas de gerenciamento de tarefas."
+                ],
+                answer: 2,
+                explanation: "Um dos princípios ágeis afirma que o método mais eficiente e eficaz de transmitir informações é a conversa cara a cara."
+            },
+            {
+                id: 5,
+                topic: "Manifesto",
+                question: "Qual é a medida primária de progresso em projetos ágeis?",
+                options: [
+                    "O percentual de requisitos documentados e assinados.",
+                    "A quantidade de horas trabalhadas pela equipe.",
+                    "O número de bugs corrigidos durante o ciclo.",
+                    "Software funcionando."
+                ],
+                answer: 3,
+                explanation: "De acordo com os princípios do Manifesto Ágil: 'Software funcionando é a medida primária de progresso'."
+            },
+
+            // SCRUM (6-13)
+            {
+                id: 6,
+                topic: "Scrum",
+                question: "No Scrum, quem é o responsável final por gerenciar e priorizar o Product Backlog?",
+                options: [
+                    "Scrum Master",
+                    "Product Owner (PO)",
+                    "Developers (Time de Desenvolvimento)",
+                    "Agile Coach"
+                ],
+                answer: 1,
+                explanation: "O Product Owner (PO) é a única pessoa responsável pela gestão do Product Backlog, que inclui expressar claramente os itens e priorizá-los."
+            },
+            {
+                id: 7,
+                topic: "Scrum",
+                question: "Qual o evento Scrum ideal para a equipe inspecionar a si mesma e criar um plano de melhorias a serem aplicadas no próximo Sprint?",
+                options: [
+                    "Sprint Review",
+                    "Daily Scrum",
+                    "Sprint Retrospective",
+                    "Sprint Planning"
+                ],
+                answer: 2,
+                explanation: "A Sprint Retrospective (Retrospectiva do Sprint) ocorre após a Review e serve para a equipe inspecionar como foi o Sprint (pessoas, relações, processos e ferramentas) e planejar melhorias."
+            },
+            {
+                id: 8,
+                topic: "Scrum",
+                question: "A reunião diária (Daily Scrum) possui timebox de quanto tempo máximo e qual o seu foco?",
+                options: [
+                    "15 minutos; focar em inspecionar o progresso em direção à Meta do Sprint e adaptar o Sprint Backlog.",
+                    "30 minutos; demonstrar o incremento funcional para o Product Owner.",
+                    "1 hora; planejar o trabalho técnico e atribuir tarefas a cada desenvolvedor.",
+                    "15 minutos; reportar status detalhado de projeto para os stakeholders externos."
+                ],
+                answer: 0,
+                explanation: "A Daily Scrum é um evento de 15 minutos para os Developers inspecionarem o progresso rumo à Meta da Sprint e adaptarem o Sprint Backlog conforme necessário."
+            },
+            {
+                id: 9,
+                topic: "Scrum",
+                question: "O que caracteriza a definição de 'Pronto' (Definition of Done - DoD) no Scrum?",
+                options: [
+                    "A aprovação final do contrato pelo setor financeiro.",
+                    "A lista de tarefas que o Scrum Master atribui individualmente.",
+                    "Uma descrição formal do estado do Incremento quando ele atinge as medidas de qualidade para o produto.",
+                    "A confirmação de que todos os Story Points previstos foram queimados."
+                ],
+                answer: 2,
+                explanation: "A Definition of Done (DoD) é uma descrição formal do estado do Incremento quando ele atende às medidas de qualidade exigidas para o produto."
+            },
+            {
+                id: 10,
+                topic: "Scrum",
+                question: "Qual das alternativas NÃO é um dos três pilares fundamentais do Scrum?",
+                options: [
+                    "Transparência",
+                    "Inspeção",
+                    "Previsibilidade absoluta",
+                    "Adaptação"
+                ],
+                answer: 2,
+                explanation: "O Scrum é baseado no empirismo. Seus três pilares fundamentais são Transparência, Inspeção e Adaptação."
+            },
+            {
+                id: 11,
+                topic: "Scrum",
+                question: "Durante uma Sprint no Scrum, o que PODE mudar segundo o Scrum Guide?",
+                options: [
+                    "A Meta do Sprint pode ser reduzida para encaixar novos escopos externos.",
+                    "Mudanças que diminuam a qualidade do produto.",
+                    "O tempo de duração do Sprint (Timebox) pode ser estendido se faltar funcionalidade.",
+                    "O escopo pode ser reclarificado e renegociado entre o PO e os Developers à medida que mais é aprendido."
+                ],
+                answer: 3,
+                explanation: "Durante o Sprint, nenhuma mudança é feita que ponha em risco a Meta do Sprint ou diminua a qualidade. Porém, o escopo pode ser esclarecido e renegociado à medida que se aprende mais."
+            },
+            {
+                id: 12,
+                topic: "Scrum",
+                question: "Qual o papel do Scrum Master dentro da equipe Scrum?",
+                options: [
+                    "Líder que serve (Líder Servidor / Servant Leader) e responsável pela eficácia do time Scrum.",
+                    "Gerente de projetos tradicional responsável por cobrar prazos e tarefas dos membros.",
+                    "Representante dos usuários com autoridade para cancelar a Sprint a qualquer momento.",
+                    "Arquiteto principal responsável pelas decisões de código."
+                ],
+                answer: 0,
+                explanation: "O Scrum Master é um verdadeiro líder que serve à equipe Scrum e à organização, ajudando todos a compreender e aplicar a teoria e as práticas do Scrum."
+            },
+            {
+                id: 13,
+                topic: "Scrum",
+                question: "O que compõe o Sprint Backlog?",
+                options: [
+                    "Product Backlog inteiro + lista de defeitos antigos.",
+                    "A Meta do Sprint (Sprint Goal), os itens selecionados do Product Backlog e o plano de entrega (tarefas).",
+                    "Documento descritivo dos requisitos técnicos assinado pelo cliente.",
+                    "O Incremento do software pronto para implantação."
+                ],
+                answer: 1,
+                explanation: "O Sprint Backlog é composto pela Meta do Sprint (porquê), pelo conjunto de itens do Product Backlog selecionados (o quê) e pelo plano acionável de entrega (como)."
+            },
+
+            // KANBAN (14-19)
+            {
+                id: 14,
+                topic: "Kanban",
+                question: "Qual das alternativas expressa uma das práticas centrais mais marcantes do método Kanban?",
+                options: [
+                    "Divisão do tempo obrigatoriamente em Sprints fixas de 2 semanas.",
+                    "Limitação do Trabalho em Progresso (WIP - Work in Progress).",
+                    "Eliminação de qualquer tipo de reuniões de acompanhamento.",
+                    "Criação mandatória dos papéis de Scrum Master e PO."
+                ],
+                answer: 1,
+                explanation: "Uma das práticas fundamentais do Kanban é Limitar o WIP (Work in Progress), o que reduz a alternância de contexto e revela gargalos no fluxo de trabalho."
+            },
+            {
+                id: 15,
+                topic: "Kanban",
+                question: "No Kanban, o conceito de sistema 'Puxado' (Pull System) significa que:",
+                options: [
+                    "O gerente atribui novas tarefas para a equipe assim que um cliente solicita.",
+                    "Novos trabalhos são iniciados apenas quando há capacidade disponível no sistema.",
+                    "O cliente puxa o código e faz a implantação sozinho em produção.",
+                    "As tarefas são empurradas para a próxima fase com base em um cronograma fixo."
+                ],
+                answer: 1,
+                explanation: "Em um sistema puxado, o trabalho é 'puxado' para a próxima etapa apenas quando houver capacidade livre (respeitando os limites de WIP), em contraste com sistemas empurrados."
+            },
+            {
+                id: 16,
+                topic: "Kanban",
+                question: "O métrica 'Lead Time' no contexto do Kanban refere-se a:",
+                options: [
+                    "Tempo total decorrido desde a solicitação do cliente até a entrega do item finalizado.",
+                    "Tempo que um item leva desde o início do seu desenvolvimento até a conclusão.",
+                    "Quantidade de tarefas concluídas em uma única hora de trabalho.",
+                    "Tempo de espera que uma tarefa fica parada na fila antes de ser cancelada."
+                ],
+                answer: 0,
+                explanation: "Lead Time é o tempo total gasto desde a criação da demanda/solicitação do cliente até a sua entrega final. (O tempo de desenvolvimento ativo é chamado de Cycle Time)."
+            },
+            {
+                id: 17,
+                topic: "Kanban",
+                question: "Qual métrica indica o tempo em que o trabalho esteve efetivamente sendo processado/desenvolvido no fluxo Kanban?",
+                options: [
+                    "Lead Time",
+                    "Cycle Time",
+                    "Throughput",
+                    "Takt Time"
+                ],
+                answer: 1,
+                explanation: "Cycle Time mede o tempo gasto no trabalho desde o momento em que ele é iniciado (entra em execução) até ser concluído."
+            },
+            {
+                id: 18,
+                topic: "Kanban",
+                question: "O que representa o 'Throughput' (Vazão) no método Kanban?",
+                options: [
+                    "A quantidade máxima de tarefas permitidas em uma coluna.",
+                    "A taxa de erro encontrada nas entregas do time.",
+                    "A quantidade de itens de trabalho concluídos em um determinado período de tempo.",
+                    "A diferença de tempo entre o Lead Time e o Cycle Time."
+                ],
+                answer: 2,
+                explanation: "Throughput (ou Vazão) é a quantidade de itens concluídos entregues com sucesso dentro de um intervalo de tempo específico (ex: 15 itens por semana)."
+            },
+            {
+                id: 19,
+                topic: "Kanban",
+                question: "Qual o objetivo principal do Diagrama de Fluxo Cumulativo (CFD - Cumulative Flow Diagram) no Kanban?",
+                options: [
+                    "Calcular o custo financeiro exato de cada desenvolvedor.",
+                    "Visualizar o status das tarefas, identificar gargalos e analisar a estabilidade do fluxo.",
+                    "Distribuir Story Points de forma automática entre os membros da equipe.",
+                    "Substituir o Quadro Kanban físico/digital."
+                ],
+                answer: 1,
+                explanation: "O CFD mostra a quantidade de itens em cada estado do fluxo ao longo do tempo, ajudando a visualizar WIP, Lead Time, Cycle Time e identificar gargalos na inclinação das faixas."
+            },
+
+            // LEAN IT (20-24)
+            {
+                id: 20,
+                topic: "Lean",
+                question: "Na filosofia Lean, qual o significado do termo japonês 'Muda' e qual sua meta principal?",
+                options: [
+                    "Significa 'Melhoria Contínua'; sua meta é treinar líderes.",
+                    "Significa 'Desperdício'; sua meta é identificar e eliminar desperdícios no valor entregue.",
+                    "Significa 'Sobrecarga'; sua meta é automatizar testes de software.",
+                    "Significa 'Variabilidade'; sua meta é criar documentações rígidas."
+                ],
+                answer: 1,
+                explanation: "No Lean, 'Muda' significa desperdício — tudo aquilo que consome recursos mas não agrega valor direto ao cliente final. O objetivo do Lean é eliminar o desperdício."
+            },
+            {
+                id: 21,
+                topic: "Lean",
+                question: "Qual dos princípios abaixo é um dos 7 Princípios do Desenvolvimento de Software Lean (Poppendieck)?",
+                options: [
+                    "Adiar comprometimentos (Decidir no último momento responsável).",
+                    "Definir todo o escopo no início do projeto.",
+                    "Maximizar o Trabalho em Progresso.",
+                    "Isolar o time de desenvolvimento do cliente."
+                ],
+                answer: 0,
+                explanation: "Um dos 7 princípios Lean para software é 'Adiar comprometimentos' (Defer Commitment / Decide as late as possible), mantendo opções abertas até ter dados reais para decidir."
+            },
+            {
+                id: 22,
+                topic: "Lean",
+                question: "O conceito de 'Kaizen' no ambiente Lean IT é traduzido e praticado como:",
+                options: [
+                    "Reengenharia radical e disruptiva feita uma vez por ano.",
+                    "Melhoria contínua envolvendo todos os colaboradores em pequenos passos constantes.",
+                    "Eliminação total do suporte técnico ao cliente.",
+                    "Substituição de processos humanos por automação sem análise prévia."
+                ],
+                answer: 1,
+                explanation: "Kaizen significa 'Melhoria Contínua'. É uma filosofia que busca aprimorar continuamente os processos com a participação de todos."
+            },
+            {
+                id: 23,
+                topic: "Lean",
+                question: "Qual é a definição de 'Mapeamento do Fluxo de Valor' (Value Stream Mapping - VSM) no Lean IT?",
+                options: [
+                    "Um diagrama de rede para estimar prazos de projetos complexos.",
+                    "Ferramenta para analisar e desenhar o fluxo de materiais/informações necessários para entregar um produto ao cliente, identificando etapas com e sem valor agregado.",
+                    "A lista de salários dos profissionais envolvidos na TI.",
+                    "Um gráfico de pizza mostrando a alocação de servidores."
+                ],
+                answer: 1,
+                explanation: "O VSM é uma técnica usada para visualizar todas as etapas do processo de entrega, diferenciando o tempo de agregação de valor dos tempos de espera/desperdício."
+            },
+            {
+                id: 24,
+                topic: "Lean",
+                question: "Quais são os 3 tipos de desperdício conhecidos como 'Os 3 M's' do Lean (Muda, Mura e Muri)?",
+                options: [
+                    "Muda (Desperdício), Mura (Inconsistência/Variabilidade) e Muri (Sobrecarga).",
+                    "Muda (Mudança), Mura (Muralha) e Muri (Mutações).",
+                    "Muda (Manutenção), Mura (Métrica) e Muri (Mitigação).",
+                    "Muda (Modularidade), Mura (Multitarefa) e Muri (Minimização)."
+                ],
+                answer: 0,
+                explanation: "Os 3 Ms do Lean são: Muda (Desperdício de atividades), Mura (Descontinuidade/Variabilidade do fluxo) e Muri (Sobrecarga de pessoas ou máquinas)."
+            },
+
+            // EXTREME PROGRAMMING - XP (25-30)
+            {
+                id: 25,
+                topic: "XP",
+                question: "Qual das opções apresenta práticas engenharia centrais do Extreme Programming (XP)?",
+                options: [
+                    "Desenvolvimento Orientado a Testes (TDD), Programação em Par e Integração Contínua.",
+                    "Sprints congeladas, Diagrama PERT e Análise de Pontos de Função.",
+                    "Documentação extensiva antecedente, Modelagem BDUF e Testes Manuais Finais.",
+                    "Reunião de Diretoria, Contrato Fechado e Gerenciamento Top-down."
+                ],
+                answer: 0,
+                explanation: "O XP foca em práticas técnicas de excelência em engenharia como TDD, Programação em Par (Pair Programming), Refatoração, Design Simples e Integração Contínua."
+            },
+            {
+                id: 26,
+                topic: "XP",
+                question: "No TDD (Test-Driven Development), qual é a sequência correta do ciclo 'Red-Green-Refactor'?",
+                options: [
+                    "Escrever o código funcional -> Criar o teste -> Corrigir bugs.",
+                    "Escrever um teste que falha (Red) -> Escrever o código mínimo para o teste passar (Green) -> Refatorar o código mantendo o teste passando (Refactor).",
+                    "Refatorar o código -> Escrever o teste -> Validar com o cliente.",
+                    "Executar o teste que passa (Green) -> Provocar um erro (Red) -> Refatorar."
+                ],
+                answer: 1,
+                explanation: "O ciclo do TDD é: 1. Escrever teste que falha (Red); 2. Fazer o código mais simples para passar (Green); 3. Melhorar o design do código mantendo testes verdes (Refactor)."
+            },
+            {
+                id: 27,
+                topic: "XP",
+                question: "Quais são os 5 Valores Fundamentais do Extreme Programming (XP)?",
+                options: [
+                    "Comunicação, Simplicidade, Feedback, Coragem e Respeito.",
+                    "Qualidade, Preço, Prazo, Escopo e Riscos.",
+                    "Planejamento, Execução, Controle, Encerramento e Auditoria.",
+                    "Agilidade, Automação, Velocidade, Cobrança e Lucro."
+                ],
+                answer: 0,
+                explanation: "Os cinco valores humanos e culturais do XP definidos por Kent Beck são: Comunicação, Simplicidade, Feedback, Coragem e Respeito."
+            },
+            {
+                id: 28,
+                topic: "XP",
+                question: "A prática de 'Propriedade Coletiva do Código' no XP defende que:",
+                options: [
+                    "Ninguém pode alterar o código escrito por outro desenvolvedor.",
+                    "Qualquer desenvolvedor da equipe tem permissão e responsabilidade de alterar qualquer parte do código a qualquer momento.",
+                    "Apenas o arquiteto chefe possui o direito de aprovar Pull Requests.",
+                    "O cliente possui o código-fonte em um pendrive ao fim do dia."
+                ],
+                answer: 1,
+                explanation: "A propriedade coletiva incentiva que todos os membros da equipe sejam responsáveis por todo o código, podendo editar e melhorar qualquer trecho sem bloqueios."
+            },
+            {
+                id: 29,
+                topic: "XP",
+                question: "Em Programação em Par (Pair Programming), quais são os dois papéis assumidos pela dupla frente ao computador?",
+                options: [
+                    "Gerente e Programador.",
+                    "Piloto (Driver) e Navegador (Navigator).",
+                    "Testador e Desenvolvedor.",
+                    "Scrum Master e Product Owner."
+                ],
+                answer: 1,
+                explanation: "No Pair Programming, o 'Piloto' digita o código enquanto o 'Navegador' analisa o trabalho em tempo real, pensa na estratégia global e identifica possíveis falhas."
+            },
+            {
+                id: 30,
+                topic: "XP",
+                question: "O que preconiza o princípio do 'Design Simples' no XP?",
+                options: [
+                    "Desenvolver arquiteturas complexas para prever requisitos dos próximos 5 anos.",
+                    "Usar apenas interfaces gráficas simples e sem cores.",
+                    "O sistema deve fazer tudo o que precisa ser feito HOJE, sem código redundante e da forma mais simples possível.",
+                    "Evitar o uso de orientação a objetos."
+                ],
+                answer: 2,
+                explanation: "Design Simples defende criar o design mais simples que funcione para os requisitos atuais (Princípio YAGNI - You Aren't Gonna Need It), sem antecipar complexidades futuras não solicitadas."
+            },
+
+            // CRYSTAL (31-34)
+            {
+                id: 31,
+                topic: "Crystal",
+                question: "A família de metodologias Crystal (criada por Alistair Cockburn) categoriza os projetos com base em quais dois fatores principais?",
+                options: [
+                    "Tamanho da equipe (número de pessoas) e Grau de Criticidade (risco de perda de vidas, dinheiro, etc.).",
+                    "Linguagem de programação utilizada e tipo de banco de dados.",
+                    "Orçamento em dólares e localização geográfica dos desenvolvedores.",
+                    "Tempo total de contrato e quantidade de servidores envolvidos."
+                ],
+                answer: 0,
+                explanation: "Crystal classifica projetos pelas dimensões: número de pessoas no time (Clear, Yellow, Orange, Red...) e potencial de danos/criticidade em caso de falha (Comfort, Discretionary Money, Essential Money, Life)."
+            },
+            {
+                id: 32,
+                topic: "Crystal",
+                question: "Qual das variantes da família Crystal é recomendada para equipes pequenas (de aproximadamente 1 a 6 ou 8 pessoas)?",
+                options: [
+                    "Crystal Magenta",
+                    "Crystal Clear",
+                    "Crystal Orange",
+                    "Crystal Red"
+                ],
+                answer: 1,
+                explanation: "Crystal Clear é a metodologia da família destinada a equipes pequenas (até ~6 a 8 pessoas), focada em comunicação informal e entregas frequentes."
+            },
+            {
+                id: 33,
+                topic: "Crystal",
+                question: "Qual é uma das propriedades primárias e indispensáveis compartilhadas por todos os projetos Crystal bem-sucedidos?",
+                options: [
+                    "Entrega Frequente de software funcional ao usuário.",
+                    "Uso obrigatório da ferramenta JIRA.",
+                    "Ausência de testes automatizados.",
+                    "Sprints obrigatoriamente de 1 semana."
+                ],
+                answer: 0,
+                explanation: "Entre as propriedades essenciais da família Crystal estão: Entrega Frequente, Melhoria Reflexiva (Reflective Improvement) e Comunicação Osmótica."
+            },
+            {
+                id: 34,
+                topic: "Crystal",
+                question: "O conceito de 'Comunicação Osmótica' na metodologia Crystal descreve:",
+                options: [
+                    "A troca de e-mails automatizados entre o servidor e os clientes.",
+                    "A absorção passiva de informações pelas pessoas presentes no mesmo ambiente de trabalho.",
+                    "Reuniões formais diárias conduzidas pelo Gerente de Projetos.",
+                    "O envio de relatórios em formato PDF para os diretores."
+                ],
+                answer: 1,
+                explanation: "Comunicação Osmótica ocorre quando os membros da equipe trabalham na mesma sala e aprendem sobre o projeto quase que por 'osmo' (escutando conversas em segundo plano)."
+            },
+
+            // DSDM (35-37)
+            {
+                id: 35,
+                topic: "DSDM",
+                question: "O DSDM (Dynamic Systems Development Method) é amplamente conhecido por priorizar requisitos utilizando qual técnica de categorização?",
+                options: [
+                    "Análise SWOT",
+                    "Técnica MoSCoW (Must have, Should have, Could have, Won't have)",
+                    "Gráfico de Burndown",
+                    "Diagrama de Ishikawa"
+                ],
+                answer: 1,
+                explanation: "O DSDM popularizou a priorização MoSCoW: Must (obrigatório), Should (deveria ter), Could (poderia ter) e Won't have (não terá por enquanto)."
+            },
+            {
+                id: 36,
+                topic: "DSDM",
+                question: "Qual é uma característica marcante do DSDM em relação à fixação de variáveis do projeto?",
+                options: [
+                    "Fixa o escopo e varia o tempo e o custo.",
+                    "Fixa o Tempo, Custo e Qualidade no início, variando o Escopo entregue.",
+                    "Permite que o custo varie ilimitadamente para atender ao prazo.",
+                    "Não admite qualquer tipo de iteração ou prototipação."
+                ],
+                answer: 1,
+                explanation: "Ao contrário do modelo tradicional (que fixa escopo e varia tempo/custo), o DSDM fixa Tempo, Custo e Qualidade, ajustando a quantidade de Requisitos/Escopo através do MoSCoW."
+            },
+            {
+                id: 37,
+                topic: "DSDM",
+                question: "Qual dos princípios abaixo pertence ao DSDM Agile Project Framework?",
+                options: [
+                    "Focar na necessidade do negócio (Focus on the business need) e Entregar no prazo (Deliver on time).",
+                    "Criar arquitetura completa antes do desenvolvimento.",
+                    "Proibir modificações no plano original após o aceite inicial.",
+                    "Desenvolver isoladamente sem envolvimento do cliente."
+                ],
+                answer: 0,
+                explanation: "Os princípios centrais do DSDM incluem focar no negócio, entregar no prazo, colaborar, nunca comprometer a qualidade e construir iterativamente com feedback."
+            },
+
+            // SAFE (38-41)
+            {
+                id: 38,
+                topic: "SAFe",
+                question: "O SAFe (Scaled Agile Framework) destina-se principalmente a qual contexto de aplicação?",
+                options: [
+                    "Projetos individuais de startups com até 3 desenvolvedores.",
+                    "Escalonamento do Agile para grandes organizações e corporações com múltiplos times.",
+                    "Substituição exclusiva de equipes de infraestrutura de TI.",
+                    "Apenas para projetos acadêmicos e pesquisas científicas."
+                ],
+                answer: 1,
+                explanation: "O SAFe é um framework de conhecimento projetado para escalar práticas ágeis (Scrum, Kanban, XP) para nível enterprise/corporativo com dezenas ou centenas de times."
+            },
+            {
+                id: 39,
+                topic: "SAFe",
+                question: "No SAFe, o que é um ART (Agile Release Train)?",
+                options: [
+                    "Um servidor de integração contínua automatizado.",
+                    "Uma equipe de equipes ('team of agile teams') alinhada a uma visão e missão comum para entregar valor contínuo.",
+                    "A lista de bugs pendentes da diretoria executiva.",
+                    "Uma metáfora para trens que transportam equipamentos de TI."
+                ],
+                answer: 1,
+                explanation: "O Agile Release Train (ART) é a construção central do SAFe: uma equipe de equipes ágeis que sincroniza iterações e entrega soluções de valor em cadência regular."
+            },
+            {
+                id: 40,
+                topic: "SAFe",
+                question: "Qual o evento do SAFe onde múltiplos times se reúnem presencialmente ou virtualmente para planejar o próximo incremento (PI Planning)?",
+                options: [
+                    "Program Increment (PI) Planning",
+                    "Daily Standup Scaled",
+                    "System Demo Global",
+                    "Scrum of Scrums"
+                ],
+                answer: 0,
+                explanation: "O PI Planning é o evento seminal do SAFe, onde todos os membros do Agile Release Train se alinham sobre a visão, prioridades e dependências para os próximos 8-12 semanas (o PI)."
+            },
+            {
+                id: 41,
+                topic: "SAFe",
+                question: "Quais são as 4 configurações básicas do SAFe (versão 5/6)?",
+                options: [
+                    "Essential, Large Solution, Portfolio e Full SAFe.",
+                    "Basic, Medium, Advanced e Enterprise.",
+                    "Scrum, Kanban, XP e Lean.",
+                    "Junior, Pleno, Senior e Specialist."
+                ],
+                answer: 0,
+                explanation: "O SAFe oferece 4 níveis de configuração de acordo com o porte da organização: Essential SAFe, Large Solution SAFe, Portfolio SAFe e Full SAFe."
+            },
+
+            // PERT E ESTIMATIVAS (42-46)
+            {
+                id: 42,
+                topic: "PERT",
+                question: "Na estimativa PERT (Program Evaluation and Review Technique) de três pontos, quais são as três estimativas utilizadas?",
+                options: [
+                    "Otimista (O), Mais Provável (M) e Pessimista (P).",
+                    "Mínima, Média e Máxima absoluta.",
+                    "Ideal, Real e Exagerada.",
+                    "Passada, Presente e Futura."
+                ],
+                answer: 0,
+                explanation: "O cálculo PERT baseia-se na Média Ponderada de três estimativas: Otimista (O), Mais Provável / Most Likely (M) e Pessimista (P)."
+            },
+            {
+                id: 43,
+                topic: "PERT",
+                question: "Qual é a fórmula padrão da Média Ponderada PERT (Te) para calcular a estimativa de tempo esperado de uma tarefa?",
+                options: [
+                    "Te = (O + M + P) / 3",
+                    "Te = (O + 4M + P) / 6",
+                    "Te = (O + 2M + 2P) / 5",
+                    "Te = (4O + M + P) / 6"
+                ],
+                answer: 1,
+                explanation: "A fórmula PERT tradicional dá peso 4 para a estimativa Mais Provável (M): Te = (O + 4M + P) / 6."
+            },
+            {
+                id: 44,
+                topic: "PERT",
+                question: "Se uma tarefa tem Estimativa Otimista (O) = 4 dias, Mais Provável (M) = 7 dias e Pessimista (P) = 16 dias, qual o Tempo Esperado (Te) pela fórmula PERT?",
+                options: [
+                    "9 dias",
+                    "8 dias",
+                    "7.5 dias",
+                    "10 dias"
+                ],
+                answer: 1,
+                explanation: "Cálculo PERT: Te = (4 + 4*(7) + 16) / 6 = (4 + 28 + 16) / 6 = 48 / 6 = 8 dias."
+            },
+            {
+                id: 45,
+                topic: "PERT",
+                question: "Como é calculada a Variância (σ²) de uma atividade no PERT com base no Desvio Padrão (σ)?",
+                options: [
+                    "σ² = [ (P - O) / 6 ]²",
+                    "σ² = (P - O) / 3",
+                    "σ² = (O + P) / M",
+                    "σ² = [ (P + M + O) / 6 ]²"
+                ],
+                answer: 0,
+                explanation: "O Desvio Padrão é σ = (P - O) / 6. A Variância é o quadrado do desvio padrão: σ² = [ (P - O) / 6 ]²."
+            },
+            {
+                id: 46,
+                topic: "PERT",
+                question: "No contexto do método do Caminho Crítico (CPM/PERT), o que é o 'Caminho Crítico' de um projeto?",
+                options: [
+                    "O caminho com as tarefas de menor prioridade.",
+                    "A sequência de atividades dependentes que determina a duração total mais longa do projeto (com folga zero).",
+                    "O conjunto de tarefas que possuem o maior custo financeiro.",
+                    "A lista de riscos identificados pela gerência."
+                ],
+                answer: 1,
+                explanation: "O Caminho Crítico é a sequência de tarefas encadeadas de maior duração total no diagrama de rede; atrasar qualquer tarefa nesse caminho atrasa o projeto inteiro."
+            },
+
+            // PLANNING POKER (47-50)
+            {
+                id: 47,
+                topic: "Poker",
+                question: "Qual a sequência de números tipicamente empregada nas cartas do Planning Poker e qual sua inspiração?",
+                options: [
+                    "Sequência linear: 1, 2, 3, 4, 5, 6, 7, 8...",
+                    "Sequência de Fibonacci modificada (ex: 0, 1, 2, 3, 5, 8, 13, 20, 40, 100) para refletir a maior incerteza em números maiores.",
+                    "Potências puras de 10: 1, 10, 100, 1000.",
+                    "Números primos: 2, 3, 5, 7, 11, 13, 17."
+                ],
+                answer: 1,
+                explanation: "Usa-se a sequência de Fibonacci (ou modificada) porque à medida que a estimativa cresce, a incerteza e a imprecisão aumentam proporcionalmente."
+            },
+            {
+                id: 48,
+                topic: "Poker",
+                question: "No Planning Poker, o que estimam as cartas e os 'Story Points'?",
+                options: [
+                    "O número exato de horas de relógio que cada programador vai trabalhar.",
+                    "O custo financeiro em Reais da funcionalidade.",
+                    "O esforço relativo, complexidade e incerteza/risco de uma história de usuário.",
+                    "O número de linhas de código que serão geradas."
+                ],
+                answer: 2,
+                explanation: "Story Points medem o tamanho/esforço relativo da tarefa, combinando complexidade, quantidade de trabalho e incerteza/riscos envolvidos."
+            },
+
+            {
+                id: 49,
+                topic: "Poker",
+                question: "Quando há uma grande discrepância na votação do Planning Poker (ex: um membro vota 2 e outro vota 20), qual o procedimento correto?",
+                options: [
+                    "Fazer a média aritmética simples dos dois valores e encerrar.",
+                    "O Scrum Master decide o valor correto.",
+                    "Pedir para as pessoas com os votos mais alto e mais baixo explicarem suas razões, promovendo discussão antes de votar novamente.",
+                    "Descartar a história de usuário do backlog."
+                ],
+                answer: 2,
+                explanation: "A discrepância revela entendimentos diferentes ou riscos não vistos por todos. As pontas (votos mais baixo e mais alto) justificam seus pontos de vista para alinhar a equipe antes de uma nova rodada."
+            },
+            {
+                id: 50,
+                topic: "Poker",
+                question: "Qual é a principal vantagem do uso do Planning Poker com revelação simultânea das cartas?",
+                options: [
+                    "Evitar o efeito de ancoragem (influência da opinião do primeiro a falar sobre os demais).",
+                    "Garantir que a reunião termine exatamente em 5 minutos.",
+                    "Impedir que o Product Owner tire dúvidas técnicas.",
+                    "Obrigar todos os membros a votarem o mesmo valor na primeira tentativa."
+                ],
+                answer: 0,
+                explanation: "A revelação simultânea impede que o voto de um membro sênior ou mais vocal influencie (ancore) a opinião e a estimativa individual dos outros."
+            }
+        ];
+
+        // Data Store dos Flashcards (20 Flashcards)
+        const flashcardsData = [
+            {
+                category: "Manifesto Ágil",
+                front: "Quais são os 4 Valores do Manifesto Ágil?",
+                back: "1. Indivíduos e interações mais que processos e ferramentas.\n2. Software em funcionamento mais que documentação abrangente.\n3. Colaboração com o cliente mais que negociação de contratos.\n4. Responder a mudanças mais que seguir um plano."
+            },
+            {
+                category: "Scrum",
+                front: "Quais são as 3 Responsabilidades (Papéis) no Scrum?",
+                back: "• Product Owner (PO): Gerencia o Backlog e valor do produto.\n• Scrum Master: Facilita o processo e remove impedimentos.\n• Developers: Constroem o incremento funcional de qualidade."
+            },
+            {
+                category: "Scrum",
+                front: "Quais são os 5 Eventos do Scrum?",
+                back: "1. O Sprint (contêiner)\n2. Sprint Planning (Planejamento)\n3. Daily Scrum (Reunião Diária)\n4. Sprint Review (Revisão da Entrega)\n5. Sprint Retrospective (Retrospectiva de Processo)"
+            },
+            {
+                category: "Kanban",
+                front: "O que é WIP no Kanban e por que deve ser limitado?",
+                back: "WIP (Work In Progress) é o trabalho iniciado mas não concluído. Limitar o WIP reduz multitarefa, diminui o Lead Time e expõe gargalos do fluxo."
+            },
+            {
+                category: "Kanban",
+                front: "Qual a diferença entre Lead Time e Cycle Time?",
+                back: "• Lead Time: Tempo do pedido do cliente até a entrega final.\n• Cycle Time: Tempo em que o item esteve efetivamente sendo trabalhado/desenvolvido."
+            },
+            {
+                category: "Lean IT",
+                front: "O que são 'Muda', 'Mura' e 'Muri'?",
+                back: "• Muda: Desperdício de processos/recursos.\n• Mura: Inconsistência, variabilidade e falta de fluxo constante.\n• Muri: Sobrecarga em pessoas ou equipamentos."
+            },
+            {
+                category: "Lean IT",
+                front: "O que é o conceito de Kaizen?",
+                back: "Filosofia japonesa de 'Melhoria Contínua'. Pequenas melhorias diárias e incrementais envolvendo toda a organização."
+            },
+            {
+                category: "XP (Extreme Programming)",
+                front: "O que é TDD (Test-Driven Development) e seu ciclo?",
+                back: "Desenvolvimento Guiado por Testes. Ciclo Red-Green-Refactor:\n1. Red: Escreva um teste que falhe.\n2. Green: Escreva código mínimo para passar.\n3. Refactor: Melhore o código."
+            },
+            {
+                category: "XP (Extreme Programming)",
+                front: "Quais os papéis no Pair Programming (Programação em Par)?",
+                back: "• Piloto (Driver): Escreve o código e foca na sintaxe/solução imediata.\n• Navegador (Navigator): Revisa em tempo real, pensa em arquitetura e estratégias."
+            },
+            {
+                category: "XP (Extreme Programming)",
+                front: "Quais são os 5 Valores do XP?",
+                back: "1. Comunicação\n2. Simplicidade\n3. Feedback\n4. Coragem\n5. Respeito"
+            },
+            {
+                category: "Crystal",
+                front: "Como a Família Crystal classifica os projetos?",
+                back: "Pelo Tamanho da Equipe (Clear, Yellow, Orange, Red) e pela Criticidade do Sistema (Comfort, Discretionary Money, Essential Money, Life)."
+            },
+            {
+                category: "Crystal",
+                front: "O que é Comunicação Osmótica no Crystal?",
+                back: "A assimilação natural de informações por membros da equipe que trabalham no mesmo espaço físico/virtual e ouvem conversas de fundo."
+            },
+            {
+                category: "DSDM",
+                front: "O que significa a sigla MoSCoW para priorização?",
+                back: "• M: Must have (Obrigatório)\n• S: Should have (Deveria ter)\n• C: Could have (Poderia ter)\n• W: Won't have this time (Não terá por enquanto)"
+            },
+            {
+                category: "DSDM",
+                front: "Como o DSDM lida com a 'Tríplice Restrição'?",
+                back: "Fixa Prazo, Custo e Qualidade. O que varia é o Escopo/Requisitos entregues através da técnica MoSCoW."
+            },
+            {
+                category: "SAFe",
+                front: "O que é um ART (Agile Release Train) no SAFe?",
+                back: "É uma equipe de equipes ágeis (50-125+ pessoas) alinhadas para entregar valor continuo em ciclos chaves chamados PI (Program Increment)."
+            },
+            {
+                category: "SAFe",
+                front: "O que é PI Planning no SAFe?",
+                back: "Evento de planejamento presencial/sincronizado de 2 dias onde todo o Agile Release Train planeja o trabalho das próximas 8-12 semanas."
+            },
+            {
+                category: "PERT",
+                front: "Qual a fórmula do Tempo Esperado (Te) no PERT?",
+                back: "Te = (O + 4M + P) / 6\nOnde:\nO = Otimista\nM = Mais Provável (Most Likely)\nP = Pessimista"
+            },
+            {
+                category: "PERT",
+                front: "Como é calculado o Desvio Padrão (σ) no PERT?",
+                back: "σ = (P - O) / 6\nA variância é a aplicação do quadrado no resultado: σ² = [ (P - O) / 6 ]²."
+            },
+            {
+                category: "Planning Poker",
+                front: "Por que se utiliza a sequência de Fibonacci nas cartas?",
+                back: "Porque reflete o aumento do risco e da incerteza: quanto maior o esforço estimado, menor é a precisão absoluta."
+            },
+            {
+                category: "Planning Poker",
+                front: "Como evitar o efeito de 'Ancoragem' na estimativa?",
+                back: "Todos os membros escolhem sua carta em segredo e revelam simultaneamente ao mesmo tempo quando solicitado."
+            }
+        ];
+
+        // Estado da Aplicação
+        let userAnswers = {};
+        let currentFCIndex = 0;
+        let isFlipped = false;
+        let currentQuizFilter = "ALL";
+
+        // Inicialização
+        window.onload = function() {
+            renderQuiz();
+            updateFlashcard();
+        };
+
+        // Troca de Abas
+        function switchTab(tab) {
+            const quizSec = document.getElementById('section-quiz');
+            const flashcardSec = document.getElementById('section-flashcards');
+            const quizBtn = document.getElementById('tab-quiz-btn');
+            const flashBtn = document.getElementById('tab-flashcards-btn');
+
+            if (tab === 'quiz') {
+                quizSec.classList.remove('hidden');
+                flashcardSec.classList.add('hidden');
+                
+                quizBtn.className = "flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-brand-600 dark:text-brand-500 bg-white dark:bg-slate-800 shadow-sm";
+                flashBtn.className = "flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white";
+            } else {
+                quizSec.classList.add('hidden');
+                flashcardSec.classList.remove('hidden');
+
+                flashBtn.className = "flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-brand-600 dark:text-brand-500 bg-white dark:bg-slate-800 shadow-sm";
+                quizBtn.className = "flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white";
+            }
+        }
+
+        // Modo Escuro
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const icon = document.getElementById('theme-icon');
+            if (document.documentElement.classList.contains('dark')) {
+                icon.className = 'fa-solid fa-sun text-lg text-amber-400';
+            } else {
+                icon.className = 'fa-solid fa-moon text-lg text-slate-600';
+            }
+        }
+
+        // Renderizador do Quiz
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = '';
+
+            const filtered = questionsData.filter(q => currentQuizFilter === "ALL" || q.topic === currentQuizFilter);
+
+            filtered.forEach((q, idx) => {
+                const isAnswered = userAnswers[q.id] !== undefined;
+                const selectedOpt = userAnswers[q.id];
+
+                const qCard = document.createElement('div');
+                qCard.className = "bg-white dark:bg-slate-800 p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all";
+                
+                let optionsHTML = '';
+                q.options.forEach((opt, oIdx) => {
+                    let btnStyle = "bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700";
+                    let iconHTML = `<span class="w-6 h-6 rounded-full border border-slate-300 dark:border-slate-600 text-xs flex items-center justify-center font-bold mr-3 shrink-0">${String.fromCharCode(65 + oIdx)}</span>`;
+
+                    if (isAnswered) {
+                        if (oIdx === q.answer) {
+                            btnStyle = "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-800 dark:text-emerald-300 font-semibold";
+                            iconHTML = `<span class="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs flex items-center justify-center font-bold mr-3 shrink-0"><i class="fa-solid fa-check"></i></span>`;
+                        } else if (selectedOpt === oIdx) {
+                            btnStyle = "bg-rose-50 dark:bg-rose-950/40 border-rose-500 text-rose-800 dark:text-rose-300 font-semibold";
+                            iconHTML = `<span class="w-6 h-6 rounded-full bg-rose-500 text-white text-xs flex items-center justify-center font-bold mr-3 shrink-0"><i class="fa-solid fa-xmark"></i></span>`;
+                        } else {
+                            btnStyle = "opacity-50 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500";
+                        }
+                    }
+
+                    optionsHTML += `
+                        <button 
+                            onclick="selectOption(${q.id}, ${oIdx})" 
+                            ${isAnswered ? 'disabled' : ''} 
+                            class="w-full text-left p-3.5 rounded-xl border transition-all flex items-center text-sm ${btnStyle}">
+                            ${iconHTML}
+                            <span class="flex-1">${opt}</span>
+                        </button>
+                    `;
+                });
+
+                let explanationHTML = '';
+                if (isAnswered) {
+                    explanationHTML = `
+                        <div class="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 text-xs sm:text-sm">
+                            <p class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 mb-1">
+                                <i class="fa-solid fa-circle-info text-brand-500"></i> Explicação do Gabarito:
+                            </p>
+                            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">${q.explanation}</p>
+                        </div>
+                    `;
+                }
+
+                qCard.innerHTML = `
+                    <div class="flex items-start justify-between gap-3 mb-3">
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800/40">
+                            Questão ${q.id} • ${q.topic}
+                        </span>
+                        ${isAnswered ? (selectedOpt === q.answer ? 
+                            '<span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> Correto</span>' : 
+                            '<span class="text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1"><i class="fa-solid fa-circle-xmark"></i> Incorreto</span>') : ''}
+                    </div>
+                    <h3 class="text-base sm:text-lg font-semibold text-slate-800 dark:text-white mb-4 leading-snug">
+                        ${q.question}
+                    </h3>
+                    <div class="space-y-2.5">
+                        ${optionsHTML}
+                    </div>
+                    ${explanationHTML}
+                `;
+
+                container.appendChild(qCard);
+            });
+
+            updateQuizStats();
+        }
+
+        // Seleção de Resposta
+        function selectOption(qId, optionIdx) {
+            userAnswers[qId] = optionIdx;
+            renderQuiz();
+        }
+
+        // Filtro por Tópico
+        function filterQuizTopics() {
+            currentQuizFilter = document.getElementById('filter-topic').value;
+            renderQuiz();
+        }
+
+        // Atualização de Estatísticas do Quiz
+        function updateQuizStats() {
+            const total = questionsData.length;
+            const answeredCount = Object.keys(userAnswers).length;
+            
+            let correctCount = 0;
+            Object.keys(userAnswers).forEach(qId => {
+                const question = questionsData.find(q => q.id === parseInt(qId));
+                if (question && userAnswers[qId] === question.answer) {
+                    correctCount++;
+                }
+            });
+
+            const scorePercent = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
+
+            document.getElementById('quiz-progress-text').innerText = `${answeredCount} / ${total}`;
+            document.getElementById('quiz-score-text').innerText = `${scorePercent}%`;
+        }
+
+        // LÓGICA FLASHCARDS
+        function flipCard() {
+            const card = document.getElementById('flashcard');
+            isFlipped = !isFlipped;
+            if (isFlipped) {
+                card.classList.add('rotate-y-180');
+            } else {
+                card.classList.remove('rotate-y-180');
+            }
+        }
+
+        function updateFlashcard() {
+            const card = document.getElementById('flashcard');
+            
+            // Força reset da rotação ao mudar de card
+            if (isFlipped) {
+                isFlipped = false;
+                card.classList.remove('rotate-y-180');
+            }
+
+            setTimeout(() => {
+                const data = flashcardsData[currentFCIndex];
+                document.getElementById('fc-category').innerText = data.category;
+                document.getElementById('fc-counter').innerText = `${currentFCIndex + 1} / ${flashcardsData.length}`;
+                document.getElementById('fc-front').innerText = data.front;
+                document.getElementById('fc-back').innerText = data.back;
+            }, 150);
+        }
+
+        function nextCard() {
+            currentFCIndex = (currentFCIndex + 1) % flashcardsData.length;
+            updateFlashcard();
+        }
+
+        function prevCard() {
+            currentFCIndex = (currentFCIndex - 1 + flashcardsData.length) % flashcardsData.length;
+            updateFlashcard();
+        }
+
+        function shuffleCards() {
+            for (let i = flashcardsData.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [flashcardsData[i], flashcardsData[j]] = [flashcardsData[j], flashcardsData[i]];
+            }
+            currentFCIndex = 0;
+            updateFlashcard();
+        }
+    </script>
 </body>
 </html>
